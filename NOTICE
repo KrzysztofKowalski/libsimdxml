@@ -1,0 +1,12 @@
+NOTICE
+
+This library is a C++23 implementation derived from the Rust crate `simdxml`:
+
+    simdxml — SIMD-accelerated XML parser with full XPath 1.0 support
+    Copyright (c) Christopher Grainger
+    https://github.com/simdxml/simdxml
+    Licensed under MIT OR Apache-2.0 (MIT chosen for this distribution)
+
+The above copyright notice is retained in this file, and shall be included in
+all copies or substantial portions of the Software, as required by the MIT
+license of the original work.
