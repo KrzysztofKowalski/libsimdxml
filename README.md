@@ -31,45 +31,49 @@ are reproducible:
 | File              | Size   | What's inside                                                                                                                                                            |
 |-------------------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `sample_1mb.xml`  | ~1 MB  | synthetic XML: 16,824 elements, nesting depth up to 22, attributes on most elements, XML entities, CDATA sections, comments, processing instructions                     |
-| `sample_10mb.xml` | ~10 MB | the same profile scaled 10× (~168k elements)                                                                                                                             |
+| `sample_5–30mb.xml` | 5–30 MB | the same profile scaled to the full benchmark matrix (5, 10, 15, 20, 30 MB)                                                                                              |
 | `sample_1mb.html` | ~1 MB  | synthetic HTML with a realistic tag mix and ~9% unclosed `<li>` elements — robustness checks only (libsimdxml does not target HTML)                                      |
 
 ### Parse speed (MB/s)
 
-Measured on an Intel Core i7-4850HQ (Haswell, 2013 laptop, 2.3 GHz), Clang 22
-`-O3`, C++23. Medians over 100+ alternating A/B runs; cold runs discarded.
+Measured on an Intel Core i7-4850HQ (Haswell, 2013 laptop, 2.3 GHz), C++23.
+Sequential benchmark orchestrator: fresh process per run, cold runs discarded,
+one process at a time, thermal-gated (cooldowns at 85 °C).
 
-| Workload                                          | sample_1mb.xml         | sample_10mb.xml        |
-|---------------------------------------------------|------------------------|------------------------|
-| libsimdxml — parse (structural index)             | **351 MB/s** (2.99 ms) | **374 MB/s** (28.1 ms) |
-| libsimdxml — full index (parse + CSR tree + name index) | 285 MB/s (3.69 ms) | 300 MB/s (34.9 ms)   |
-| libsimdxml — structural classification only       | 4,753 MB/s             | 4,272 MB/s             |
-| pugixml 1.16, in-situ (reference)                 | ~280 MB/s (3.77 ms)    | ~275 MB/s (38.2 ms)    |
+| Workload                                          | sample_1mb.xml          | sample_10mb.xml        | sample_30mb.xml        |
+|---------------------------------------------------|-------------------------|------------------------|------------------------|
+| libsimdxml — parse (structural index)             | **308 MB/s** (3.25 ms)  | **342 MB/s** (29.3 ms) | **406 MB/s** (74.0 ms) |
+| pugixml 1.16, in-situ (reference)                 | 296 MB/s (3.39 ms)      | 318 MB/s (31.5 ms)     | 336 MB/s (89.4 ms)     |
 
-Speedup of libsimdxml over pugixml 1.16: **parse 1.26× (1 MB) / 1.36×
-(10 MB)**; **full index 1.02× / 1.10×**; classification-only 16–17×;
-attribute queries 1.05× / 1.14×.
+Speedup of libsimdxml over pugixml 1.16: **1.04× (1 MB) → 1.21× (30 MB)** —
+the gap grows with input size as fixed per-parse costs amortize. libsimdxml
+nodes/attributes counts are bit-identical to pugixml and expat at every size.
+
+Earlier in-process A/B harness (100+ alternating runs, pre-fusion code):
+parse 351/374 MB/s (1.26×/1.36× vs pugixml), full index 285/300 MB/s
+(1.02×/1.10×), structural classification only ~4.3–4.8 GB/s; runtime dispatch
+measured in-binary: scalar 0.8 GB/s → AVX2 3.1–4.3 GB/s.
 
 ### Cross-language context
 
-Same `sample_1mb.xml` file, same machine, medians of the same benchmark
-harness (JVM rows via a Docker JVM):
+Same `sample_1mb.xml` file, same machine, medians of the same orchestrator run
+(JVM rows from an earlier Docker-JVM run of the same harness):
 
-| Parser         | Language | Parse time  | Throughput    |
-|----------------|----------|-------------|---------------|
-| **libsimdxml** | C++      | **2.99 ms** | **~350 MB/s** |
-| pugixml 1.16   | C++      | 3.4 ms      | ~310 MB/s     |
-| lxml           | Python   | 22.6 ms     | ~46 MB/s      |
-| cheerio        | Node.js  | 71 ms       | ~15 MB/s      |
-| sax            | Node.js  | 93 ms       | ~11 MB/s      |
-| Xerces (DOM)   | Java     | 124 ms      | ~8.5 MB/s     |
-| jsoup          | Java     | 179 ms      | ~5.9 MB/s     |
-| dom4j          | Java     | 189 ms      | ~5.6 MB/s     |
-| html.parser    | Python   | 1050 ms     | ~1.0 MB/s     |
-
-**Runtime dispatch, measured in-binary** — structural classification on the
-same 10 MB file: scalar 0.8 GB/s → AVX2 3.1 GB/s (3.8×) when dispatch was
-wired up, 4.3 GB/s after tuning. One binary for every x86-64 host.
+| Parser             | Language | Parse time  | Throughput    |
+|--------------------|----------|-------------|---------------|
+| **libsimdxml**     | C++      | **3.25 ms** | **308 MB/s**  |
+| pugixml 1.16       | C++      | 3.39 ms     | 296 MB/s      |
+| expat (SAX)        | C++      | 10.6 ms     | 94 MB/s       |
+| lxml               | Python   | 22.4 ms     | 45 MB/s       |
+| libxml2 (DOM)      | C++      | 25.4 ms     | 39 MB/s       |
+| lxml.html          | Python   | 33.2 ms     | 30 MB/s       |
+| cheerio            | Node.js  | 68.7 ms     | 15 MB/s       |
+| sax (Node)         | Node.js  | 89.8 ms     | 11 MB/s       |
+| xml.etree          | Python   | 109.5 ms    | 9 MB/s        |
+| Xerces (DOM)       | Java     | 124 ms      | ~8.5 MB/s     |
+| jsoup              | Java     | 179 ms      | ~5.9 MB/s     |
+| dom4j              | Java     | 189 ms      | ~5.6 MB/s     |
+| html.parser        | Python   | 1012 ms     | ~1.0 MB/s     |
 
 Numbers come from a 2013 laptop; the ratios, not the absolute values, are the
 point.
