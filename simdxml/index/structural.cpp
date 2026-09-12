@@ -296,39 +296,6 @@ Result<XmlIndex> parse_scalar(std::span<std::byte const> input) {
         }
         return std::size_t(-1);
     };
-    // Next byte in an open-tag body that changes the scan: '>', '/', '"'
-    // or '\''. Stateless word-OR walk — the caller processes events in
-    // document order, so the per-event probe distances sum to the tag
-    // length (no re-scan blowup).
-    auto const next_tag_event = [&](std::size_t from) noexcept -> std::size_t {
-        if (!use_simd) {
-            while (from < input.size()) {
-                unsigned char const b = b_at(input, from);
-                if (b == '>' || b == '/' || b == '"' || b == '\'') break;
-                ++from;
-            }
-            return (from < input.size()) ? from : std::size_t(-1);
-        }
-        std::size_t const nchunks = structural.gt_raw_bits.size();
-        if (nchunks == 0 || from / 64 >= nchunks) return std::size_t(-1);
-        std::size_t const first_chunk = from / 64;
-        std::size_t const first_bit = from % 64;
-        std::uint64_t const skip =
-            (first_bit != 0) ? (std::uint64_t{1} << first_bit) - 1 : 0;
-        for (std::size_t chunk = first_chunk; chunk < nchunks; ++chunk) {
-            std::uint64_t m = structural.gt_raw_bits[chunk] |
-                              structural.slash_bits[chunk] |
-                              structural.dq_bits[chunk] |
-                              structural.sq_bits[chunk];
-            if (chunk == first_chunk && first_bit != 0) m &= ~skip;
-            if (m != 0) {
-                return chunk * 64 +
-                       static_cast<std::size_t>(std::countr_zero(m));
-            }
-        }
-        return std::size_t(-1);
-    };
-
     while (true) {
         std::size_t const offset = next_lt(pos);
         if (offset == std::size_t(-1)) break;
@@ -361,7 +328,26 @@ Result<XmlIndex> parse_scalar(std::span<std::byte const> input) {
             std::size_t const name_end =
                 (delim == std::size_t(-1)) ? input.size() : delim;
             pos = name_end;
-            std::size_t const gt = next_gt(pos);
+            // A close tag usually runs straight into '>' — the delimiter
+            // byte itself is then the terminator and no second scan is
+            // needed. Otherwise search the '>' in the current chunk word
+            // first, cursor fallback across a chunk seam (same byte the
+            // cursor would return either way).
+            std::size_t gt = std::size_t(-1);
+            if (delim != std::size_t(-1) && b_at(input, delim) == '>') {
+                gt = delim;
+            } else {
+                std::size_t const gt_chunk = pos / 64;
+                if (gt_chunk < structural.gt_raw_bits.size()) {
+                    std::uint64_t const w = structural.gt_raw_bits[gt_chunk] &
+                        ~(((std::uint64_t{1} << (pos % 64)) - 1));
+                    if (w != 0) {
+                        gt = gt_chunk * 64 +
+                             static_cast<std::size_t>(std::countr_zero(w));
+                    }
+                }
+                if (gt == std::size_t(-1)) gt = next_gt(pos);
+            }
             if (gt == std::size_t(-1)) {
                 return std::unexpected(SimdXmlError::unclosed_tag(tag_start));
             }
@@ -536,39 +522,92 @@ Result<XmlIndex> parse_scalar(std::span<std::byte const> input) {
                                              : open_delim;
             pos = name_end;
 
-            // Attribute region, word-at-a-time: instead of walking every
-            // byte, hop between the events that change the scan ('>', '/',
-            // quotes) and jump over attribute values with the quote-mask
-            // cursors. The nesting stack above stays scalar.
+            // Attribute region, word-at-a-time: instead of one cursor call
+            // per event (each re-deriving the chunk and re-OR-ing the four
+            // masks), walk the OR-ed event mask one 64-bit word per chunk
+            // and classify every event byte in place. countr_zero over the
+            // word yields events in byte order, so the event sequence — and
+            // the resulting pos sequence — is exactly what the per-event
+            // cursor produced. Attribute values are skipped with the quote
+            // masks: the closing quote is searched in the current word
+            // first, cursor fallback across a chunk seam. The nesting stack
+            // above stays scalar.
             bool self_closing = false;
             if (use_simd) {
-                while (pos < input.size()) {
-                    std::size_t const e = next_tag_event(pos);
-                    if (e == std::size_t(-1)) {
+                std::size_t const nchunks = structural.gt_raw_bits.size();
+                bool terminated = false;
+                while (!terminated) {
+                    if (pos >= input.size()) break;
+                    std::size_t const chunk = pos / 64;
+                    if (chunk >= nchunks) {
                         pos = input.size();
                         break;
                     }
-                    pos = e;
-                    unsigned char const eb = b_at(input, pos);
-                    if (eb == '>') break;  // normal tag end
-                    if (eb == '/') {
-                        if (pos + 1 < input.size() &&
-                            b_at(input, pos + 1) == '>') {
-                            self_closing = true;
-                            ++pos;
+                    std::uint64_t m = structural.gt_raw_bits[chunk] |
+                                      structural.slash_bits[chunk] |
+                                      structural.dq_bits[chunk] |
+                                      structural.sq_bits[chunk];
+                    std::size_t const bit0 = pos - chunk * 64;
+                    if (bit0 != 0) {
+                        m &= ~((std::uint64_t{1} << bit0) - 1);
+                    }
+                    bool jumped_seam = false;
+                    while (m != 0) {
+                        std::size_t const e_bit = std::countr_zero(m);
+                        m &= m - 1;
+                        pos = chunk * 64 + e_bit;
+                        unsigned char const eb = b_at(input, pos);
+                        if (eb == '>') {
+                            terminated = true;  // normal tag end
                             break;
                         }
-                        ++pos;  // stray '/' inside the tag body
-                        continue;
+                        if (eb == '/') {
+                            if (pos + 1 < input.size() &&
+                                b_at(input, pos + 1) == '>') {
+                                self_closing = true;
+                                ++pos;
+                                terminated = true;
+                                break;
+                            }
+                            ++pos;  // stray '/' inside the tag body
+                            continue;
+                        }
+                        // '"' or '\'': jump to the closing quote. Found ->
+                        // the scan resumes after it; missing -> the scan
+                        // skips one byte past the opening quote (quirk kept
+                        // for bit-exactness).
+                        std::uint64_t const* qbits = (eb == '"')
+                            ? structural.dq_bits.data()
+                            : structural.sq_bits.data();
+                        std::size_t q = std::size_t(-1);
+                        std::size_t const sbit = pos + 1 - chunk * 64;
+                        if (sbit < 64) {
+                            std::uint64_t const w =
+                                qbits[chunk] &
+                                ~((std::uint64_t{1} << sbit) - 1);
+                            if (w != 0) {
+                                q = chunk * 64 +
+                                    static_cast<std::size_t>(std::countr_zero(w));
+                            }
+                        }
+                        if (q == std::size_t(-1)) {
+                            q = (eb == '"') ? next_dq(pos + 1) : next_sq(pos + 1);
+                        }
+                        pos = (q != std::size_t(-1)) ? q + 1 : pos + 2;
+                        if (pos >= input.size() || pos >= (chunk + 1) * 64) {
+                            jumped_seam = true;  // recompute the chunk from pos
+                            break;
+                        }
+                        // kill event bits inside the skipped value (bits
+                        // strictly below the resumed position)
+                        m &= ~((std::uint64_t{1} << (pos - chunk * 64)) - 1);
                     }
-                    // '"' or '\'': jump to the closing quote. Found -> the
-                    // byte loop resumes after it; missing -> the byte loop
-                    // skipped one byte past the opening quote (quirk kept
-                    // for bit-exactness).
-                    std::size_t const q = (eb == '"') ? next_dq(pos + 1)
-                                                      : next_sq(pos + 1);
-                    pos = (q != std::size_t(-1)) ? q + 1 : pos + 2;
+                    if (terminated) break;
+                    if (!jumped_seam) {
+                        pos = (chunk + 1) * 64;  // no events left in this word
+                    }
                 }
+                if (!terminated) pos = input.size();
             } else {
                 while (pos < input.size() && b_at(input, pos) != '>') {
                     if (b_at(input, pos) == '/' && pos + 1 < input.size() &&
