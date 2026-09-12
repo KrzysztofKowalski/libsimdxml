@@ -42,10 +42,10 @@ one process at a time, thermal-gated (cooldowns at 85 °C).
 
 | Workload                                          | sample_1mb.xml          | sample_10mb.xml        | sample_30mb.xml        |
 |---------------------------------------------------|-------------------------|------------------------|------------------------|
-| libsimdxml — parse (structural index)             | **308 MB/s** (3.25 ms)  | **342 MB/s** (29.3 ms) | **406 MB/s** (74.0 ms) |
-| pugixml 1.16, in-situ (reference)                 | 296 MB/s (3.39 ms)      | 318 MB/s (31.5 ms)     | 336 MB/s (89.4 ms)     |
+| libsimdxml — parse (structural index)             | **333 MB/s** (3.00 ms)  | **380 MB/s** (26.3 ms) | **414 MB/s** (72.4 ms) |
+| pugixml 1.16, in-situ (reference)                 | 288 MB/s (3.47 ms)      | 302 MB/s (33.1 ms)     | 295 MB/s (101.6 ms)    |
 
-Speedup of libsimdxml over pugixml 1.16: **1.04× (1 MB) → 1.21× (30 MB)** —
+Speedup of libsimdxml over pugixml 1.16: **1.16× (1 MB) → 1.40× (30 MB)** —
 the gap grows with input size as fixed per-parse costs amortize. libsimdxml
 nodes/attributes counts are bit-identical to pugixml and expat at every size.
 
