@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>libsimdxml — analiza wydajności</title>
+<style>
+  :root {
+    --bg: #000000;
+    --fg: #ffffff;
+    --muted: #a3a3a3;
+    --dim: #6b6b6b;
+    --accent: #4ade80;      /* simdxml */
+    --accent-dim: #166534;
+    --blue: #60a5fa;        /* pugixml / odniesienia */
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --border: #262626;
+    --card: #0a0a0a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 24px 16px 64px;
+  }
+  main { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.5px; }
+  h2 {
+    font-size: 18px; margin: 44px 0 12px; padding-top: 18px;
+    border-top: 1px solid var(--border); color: var(--fg);
+  }
+  h2 .no { color: var(--dim); font-weight: 400; margin-right: 8px; }
+  p { margin: 8px 0; }
+  .meta { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 6px; }
+  .chip {
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--card); padding: 10px 16px; min-width: 150px;
+  }
+  .chip .v { font-size: 22px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .chip .k { font-size: 12px; color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 14px; }
+  th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: right; }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; background: var(--card); }
+  td:first-child, th:first-child { text-align: left; }
+  .scroll { overflow-x: auto; }
+  .good { color: var(--accent); font-weight: 700; }
+  .blue { color: var(--blue); }
+  .warn { color: var(--warn); }
+  .bad { color: var(--bad); }
+  .muted { color: var(--muted); }
+  .note { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  code {
+    font-family: ui-monospace, "JetBrains Mono", "Fira Code", monospace;
+    font-size: 13px; background: #111; border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 5px;
+  }
+  /* wykres słupkowy */
+  .chart { margin: 14px 0; }
+  .row { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+  .row .lbl { width: 150px; flex: 0 0 150px; font-size: 13px; color: var(--muted); text-align: right; }
+  .row .track { flex: 1; min-width: 0; }
+  .row .bar { height: 16px; border-radius: 3px; background: #333; min-width: 2px; }
+  .row.top .bar { background: var(--accent); }
+  .row.ref .bar { background: var(--blue); }
+  .row .val { width: 120px; flex: 0 0 120px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 14px; }
+  .card { border: 1px solid var(--border); border-radius: 10px; background: var(--card); padding: 14px 16px; }
+  .card h3 { margin: 0 0 6px; font-size: 15px; }
+  .card .big { font-size: 20px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .card p { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+  ul { margin: 8px 0; padding-left: 22px; }
+  li { margin: 4px 0; }
+  footer { margin-top: 48px; padding-top: 14px; border-top: 1px solid var(--border); color: var(--dim); font-size: 12.5px; }
+  @media (max-width: 640px) {
+    .row .lbl { flex-basis: 105px; width: 105px; font-size: 12px; }
+    .row .val { flex-basis: 92px; width: 92px; font-size: 12px; }
+    .chip { min-width: 120px; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<h1>libsimdxml — analiza wydajności</h1>
+<p class="meta">Stan na 12.09.2026 · 3 rundy optymalizacji · Intel Core i7-4850HQ (Haswell, MacBook late 2013, 2,3 GHz) · C++23 · runtime dispatch AVX2/SSE4.2/scalar</p>
+
+<div class="chips">
+  <div class="chip"><div class="v">414 MB/s</div><div class="k">parse @30 mb (orchestrator)</div></div>
+  <div class="chip"><div class="v">1,40×</div><div class="k">vs pugixml 1.16 @30 mb</div></div>
+  <div class="chip"><div class="v">1,16×–1,40×</div><div class="k">zakres przewagi 1–30 mb</div></div>
+  <div class="chip"><div class="v">#1</div><div class="k">na każdym rozmiarze, vs 13 parserów</div></div>
+  <div class="chip"><div class="v">bit-w-bit</div><div class="k">nodes/attrs = pugixml i expat</div></div>
+</div>
+
+<h2><span class="no">1.</span>Orchestrator: runda 3 (H1+H2) vs runda 2 (fuzja)</h2>
+<p>Orchestrator = świeży proces na pomiar, zimne rozbiegi odrzucone, jedna maszyna naraz, termo-gate (cooldowny przy 85 °C). Najbliżej warunków realnych.</p>
+<div class="scroll">
+<table>
+  <tr><th>plik</th><th>simdxml r2</th><th>simdxml r3</th><th>zysk</th><th>pugixml r2</th><th>pugixml r3</th><th>przewaga r2</th><th>przewaga r3</th></tr>
+  <tr><td>sample_1mb</td><td>308,3</td><td class="good">333,4</td><td>+8,1%</td><td>296</td><td>288,4</td><td>1,04×</td><td class="good">1,16×</td></tr>
+  <tr><td>sample_5mb</td><td>323</td><td class="good">341,9</td><td>+5,9%</td><td>317</td><td>305,2</td><td>1,02×</td><td class="good">1,12×</td></tr>
+  <tr><td>sample_10mb</td><td>342</td><td class="good">380,0</td><td>+11,1%</td><td>318</td><td>301,9</td><td>1,08×</td><td class="good">1,26×</td></tr>
+  <tr><td>sample_15mb</td><td>352</td><td class="good">375,4</td><td>+6,6%</td><td>328</td><td>283,6</td><td>1,07×</td><td class="good">1,32×</td></tr>
+  <tr><td>sample_20mb</td><td>381</td><td class="good">394,0</td><td>+3,4%</td><td>330</td><td>313,0</td><td>1,15×</td><td class="good">1,26×</td></tr>
+  <tr><td>sample_30mb</td><td>406</td><td class="good">414,2</td><td>+2,0%</td><td>336</td><td>295,2</td><td>1,21×</td><td class="good">1,40×</td></tr>
+</table>
+</div>
+<p class="note">Wartości w MB/s, mediana z 9 repów (2 odrzucone). Przewaga rośnie z rozmiarem — koszty stałe per parse amortyzują się, a przewaga SIMD rośnie.</p>
+
+<h2><span class="no">2.</span>Kontekst cross-language @1 mb (ten sam plik, ten sam run)</h2>
+<div class="chart">
+  <div class="row top"><div class="lbl">libsimdxml (C++)</div><div class="track"><div class="bar" style="width:100%"></div></div><div class="val good">308 MB/s · 3,25 ms</div></div>
+  <div class="row ref"><div class="lbl">pugixml 1.16 (C++)</div><div class="track"><div class="bar" style="width:96%"></div></div><div class="val">296 · 3,39 ms</div></div>
+  <div class="row"><div class="lbl">expat (C++, SAX)</div><div class="track"><div class="bar" style="width:31%"></div></div><div class="val">94,3 · 10,6 ms</div></div>
+  <div class="row"><div class="lbl">lxml (Python)</div><div class="track"><div class="bar" style="width:14.5%"></div></div><div class="val">44,6 · 22,4 ms</div></div>
+  <div class="row"><div class="lbl">libxml2 (C++)</div><div class="track"><div class="bar" style="width:12.8%"></div></div><div class="val">39,4 · 25,4 ms</div></div>
+  <div class="row"><div class="lbl">lxml.html (Python)</div><div class="track"><div class="bar" style="width:9.8%"></div></div><div class="val">30,2 · 33,2 ms</div></div>
+  <div class="row"><div class="lbl">cheerio (Node)</div><div class="track"><div class="bar" style="width:4.7%"></div></div><div class="val">14,6 · 68,7 ms</div></div>
+  <div class="row"><div class="lbl">sax (Node)</div><div class="track"><div class="bar" style="width:3.6%"></div></div><div class="val">11,1 · 89,8 ms</div></div>
+  <div class="row"><div class="lbl">xml.etree (Python)</div><div class="track"><div class="bar" style="width:3.0%"></div></div><div class="val">9,1 · 109,5 ms</div></div>
+  <div class="row"><div class="lbl">Xerces (Java)</div><div class="track"><div class="bar" style="width:2.8%"></div></div><div class="val">~8,5 · 124 ms</div></div>
+  <div class="row"><div class="lbl">jsoup (Java)</div><div class="track"><div class="bar" style="width:1.9%"></div></div><div class="val">~5,9 · 179 ms</div></div>
+  <div class="row"><div class="lbl">dom4j (Java)</div><div class="track"><div class="bar" style="width:1.8%"></div></div><div class="val">~5,6 · 189 ms</div></div>
+  <div class="row"><div class="lbl">html.parser (Python)</div><div class="track"><div class="bar" style="width:0.4%"></div></div><div class="val">~1,0 · 1012 ms</div></div>
+</div>
+<p class="note">Mediana tego samego runu (72 kombinacje, cooldownów 20). Wiersze JVM z wcześniejszego runu Docker-JVM tym samym harnessem. Słupki proporcjonalne do MB/s względem libsimdxml = 100%.</p>
+
+<h2><span class="no">3.</span>F-harness in-process: ewolucja przez 3 rundy</h2>
+<p>Ciepły pomiar w procesie, naprzemiennie A/B (100+ przebiegów), gate termiczny. Inny reżim niż orchestrator — liczby między harnessami nie są porównywalne 1:1, wewnątrz jednego harnessu tak.</p>
+<div class="scroll">
+<table>
+  <tr><th>etap</th><th>@1 mb</th><th>@10 mb</th><th>co się zmieniło</th></tr>
+  <tr><td>pre-F1F7 (baza rundy 1)</td><td>260,4</td><td>309,3</td><td class="muted">punkt odniesienia przebudowany w rundzie 3</td></tr>
+  <tr><td>post-F1F7 (= baza rundy 2)</td><td>350,9</td><td>373,5</td><td class="muted">7 faz poprawek maszyny stanów (runda 1)</td></tr>
+  <tr><td>+ fuzja body walk (runda 2)</td><td>331,7 <span class="warn">(?−4%)</span></td><td>385,2 <span class="good">(+5%)</span></td><td class="muted">jeden walk maski zamiast ~4 wywołań kursora na tag</td></tr>
+  <tr><td>+ H1 + H2 (runda 3)</td><td class="good">362,2 (+4,6%)</td><td class="good">497,0 (+34,6%)</td><td class="muted">POPCNT + wyrzucenie martwych masek eq/amp</td></tr>
+</table>
+</div>
+<p class="note">Kumulacyjnie vs pre-F1F7: <strong class="good">+39% @1 mb / +61% @10 mb</strong>. Oznaczone (?−4%): możliwa lekka regresja fuzji przy 1 mb (gęstszy wewnętrzny walk) — obserwacja między sesjami po normalizacji na pugixml, wymaga osobnej weryfikacji naprzemiennej ze starym kodem. Tryby pełne po H1/H2: full 293,5 / 380,5; attrs 291,1 / 384,1 (wcześniej 278,8 / 303,5 i 273,6 / 287,9).</p>
+
+<h2><span class="no">4.</span>Skąd zyski — mechanizmy</h2>
+<div class="cards">
+  <div class="card">
+    <h3>Fuzja body walk <span class="muted">(runda 2)</span></h3>
+    <div class="big">+27% / +24,5%</div>
+    <p>Nad pre-F1F7 (331,7/385,2 @1/10 mb). Body taga otwierającego: jeden walk na poziomie słowa maski (OR gt|slash|dq|sq) zamiast ~4 wywołań kursora na tag. Quirki zachowane 1:1 (brak domknięcia → pos+2, stray '/', self-close po bajcie).</p>
+  </div>
+  <div class="card">
+    <h3>H1: POPCNT w exact-reserve</h3>
+    <div class="big">13 → 2 uops/słowo</div>
+    <p>Pętle <code>std::popcount</code> kompilowały się do programowego SWAR (~13 uops/słowo, <code>movabs $0x5555...</code> w objdump). Helper z <code>SIMDXML_TARGET_ISA("popcnt")</code>. Bezpieczne: pętle tylko przy use_simd, a SSE4.2/AVX2 implikują POPCNT.</p>
+  </div>
+  <div class="card">
+    <h3>H2: martwe maski eq/amp</h3>
+    <div class="big">9/11 masek</div>
+    <p><code>eq_bits</code>/<code>amp_bits</code> były liczone przez wszystkie classifiery i nigdzie nie czytane. Mniej 2 alokacji mmap+zero (~2,6 MB) na parse → minor faults <strong>88 513 → 35 481</strong> na run @10 mb. To głównie stąd skok +34,6% na dużych plikach.</p>
+  </div>
+  <div class="card">
+    <h3>Kompilator: clang++ 22.1.8 vs g++ 16.2.1</h3>
+    <div class="big">clang +9,7% @1 mb</div>
+    <p>.a z -O3 zmieniana, driver zawsze clang, kalibracja na pugixml w obu binarkach (szum slotów ~3%): parse +9,7% @1 mb / +2,6% @10 mb, full +1,8% / +13%. Verdict: clang (remis → clang). Wybór powtarzalny: <code>XMLCXX=g++ ./build_simdxml.sh</code>.</p>
+  </div>
+  <div class="card">
+    <h3>Diagnoza: maszyna jest uops/latency-bound</h3>
+    <div class="big">3,0 / 10,9 / +7 ms</div>
+    <p>@10 mb: classify 3,0 ms, logika maszyny bez zapisów 10,9 ms, strumienie zapisów ~+7 ms. Czas na tag identyczny @1 mb i @10 mb → nie memory-bound, prefetch masek odpada. Dalsze duże ruchy (specjalizacja szablonem, interleaved maski) = ryzyko API — wstrzymane.</p>
+  </div>
+  <div class="card">
+    <h3>Runtime dispatch (w bibliotece)</h3>
+    <div class="big">0,8 → 3,1–4,3 GB/s</div>
+    <p>scalar → AVX2 na klasyfikacji strukturalnej; sama klasyfikacja ~4,3–4,8 GB/s. AVX2, SSE4.2, NEON i scalar skompilowane w jeden binary — bez flag -mavx2 i rekompilacji per deployment.</p>
+  </div>
+</div>
+<p class="note">Lekcja z rundy 2: kasowanie bitów maski <code>m &amp;= (1&lt;&lt;s)-1</code> bez <code>~</code> nie crashuje — masowo gubi tagi (14/28 FAIL). Testować od razu na korpusie z atrybutem (<code>&lt;b x="1"/&gt;</code>). I: bench linkuje PREBUILT .a — bez rebuildu mierzy stary kod (pułapka stale-binary).</p>
+
+<h2><span class="no">5.</span>Poprawność i zasoby</h2>
+<ul>
+  <li><strong>nodes/attrs bit-w-bit</strong> z pugixml i expat na każdym rozmiarze: 16 824 / 49 364 @1 mb → 503 778 / 1 478 055 @30 mb.</li>
+  <li><strong>test.sh: faza0 28/28</strong> (diff_classify + diff_parse bit-exact vs referencja memchr, smoke_dispatch — zgodność backendów) + smoke pełnej ścieżki ×15 @1 mb i @10 mb, po każdej zmianie.</li>
+  <li><strong>RAM @10 mb:</strong> 46,7 MB vs 57,9 MB (pugixml). Zero-copy: nazwy/teksty/atrybuty to string_view w bufor wejściowy.</li>
+  <li><strong>Exact allocation:</strong> liczniki z SIMD popcount, rezerwacja raz — bez burzy realokacji na dużych dokumentach.</li>
+</ul>
+
+<h2><span class="no">6.</span>Przypadki brzegowe (dane robustness, nie bugi libsimdxml)</h2>
+<ul>
+  <li><strong>tinyxml2 — 9/9 błędów:</strong> brak węzła PI; każdy <code>&lt;?..?&gt;</code> to XMLDeclaration i musi być przed wszystkim innym (tinyxml2.cpp:1124). Korpus ma PI po komentarzu → błąd zawsze. Plik poprawny (expat/libxml2/simdxml: 0 błędów).</li>
+  <li><strong>fast-xml-parser — 9/9 błędów (wyjaśnione 12.09):</strong> limit bezpieczeństwa <code>maxTotalExpansions: 1000</code> (v4.5.7) liczy każde odwołanie do encji; korpus ma ~6,6 tys. Gdyby włączyć do matrycy: <code>processEntities: { maxTotalExpansions: N }</code>.</li>
+  <li><strong>lxml liczy 16 912 nodes vs 16 824</strong> — nalicza komentarze/PI (inna definicja węzła, nie rozbieżność).</li>
+</ul>
+
+<h2><span class="no">7.</span>Metodologia — dlaczego dwie skale liczb</h2>
+<ul>
+  <li><strong>Orchestrator</strong> (333–414 MB/s): świeży proces na pomiar, zimne rozbiegi odrzucone, termo-gate 85 °C, cooldowny. Wolniejszy, ale najbliższy realiów.</li>
+  <li><strong>F-harness</strong> (362–497 MB/s): in-process, naprzemiennie A/B, ciepłe cache. Szybszy — izoluje koszt samego parsowania.</li>
+  <li>Liczb między harnessami <strong>nie porównujemy</strong>; porównania tylko wewnątrz jednego harnessu, naprzemiennie, z kalibracją na pugixml i kontrolą termiczną (fetch co pomiar, cooldown ≥88 °C).</li>
+  <li>Korpus: deterministyczny generator (stały seed) — 16 824 elementy @1 mb, zagnieżdżenie do 22, atrybuty na większości elementów, encje, CDATA, komentarze, PI.</li>
+</ul>
+
+<h2><span class="no">8.</span>Otwarte / następne kroki</h2>
+<ul>
+  <li>Pełny cross-language re-run po H1/H2 (<code>--lang cpp,python,node</code>, jeden run) — odświeży tabelę sekcji 2.</li>
+  <li>Push official (4 commity na main: fuzja + README + hot-path + README 333/380/414).</li>
+  <li>Ew. weryfikacja regresji fuzji @1 mb (bench ze starym structural.cpp, naprzemiennie).</li>
+  <li>Java w jednym runie z cpp/python/node (mixed-mode orchestratora: buduj obraz bench-java gdy java ∈ LANGS, timeout wokół docker run).</li>
+</ul>
+
+<footer>
+Źródła: <code>tmp/benchmark/results/REPORT.md</code> (run 08.09 18:58 + run 12.09), <code>tmp/pugixml_analiza/ab_*.tsv</code>, <code>tmp/faza0_dispatch</code> niezmienność, commity <code>abe8f253a2</code> / <code>cfc7b32281</code> / <code>580f7bb335</code> / <code>6d45cf4a4a</code> (libs), <code>0201a63</code> / <code>7208140</code> / <code>5609d10</code> / <code>4bf51b3</code> (official). Wygenerowano 12.09.2026.
+</footer>
+
+</main>
+</body>
+</html>
