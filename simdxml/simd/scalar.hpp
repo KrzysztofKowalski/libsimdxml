@@ -67,8 +67,10 @@ classify_scalar(std::span<std::byte const> input) {
 
 /// Raw scalar fallback: byte-at-a-time classification of the quote-agnostic
 /// '<' / '>' masks plus the class masks the parse state machine consumes
-/// (quotes, dash, bracket, whitespace, name delimiters, '=', '&').
-/// `lt_bits` / `gt_bits` are left empty — see `classify_structural_raw`.
+/// (quotes, dash, bracket, whitespace, name delimiters). `lt_bits` /
+/// `gt_bits` are left empty — see `classify_structural_raw`. `eq_bits` /
+/// `amp_bits` stay empty too (nobody reads them; fields kept for API
+/// compatibility).
 [[nodiscard]] inline StructuralIndex
 classify_scalar_raw(std::span<std::byte const> input) {
     std::size_t const len = input.size();
@@ -83,8 +85,6 @@ classify_scalar_raw(std::span<std::byte const> input) {
     idx.ws_bits.assign(num_chunks, 0);
     idx.slash_bits.assign(num_chunks, 0);
     idx.qmark_bits.assign(num_chunks, 0);
-    idx.eq_bits.assign(num_chunks, 0);
-    idx.amp_bits.assign(num_chunks, 0);
     idx.len = len;
 
     for (std::size_t i = 0; i < len; ++i) {
@@ -124,12 +124,6 @@ classify_scalar_raw(std::span<std::byte const> input) {
                 break;
             case '?':
                 idx.qmark_bits[chunk] |= bit_val;
-                break;
-            case '=':
-                idx.eq_bits[chunk] |= bit_val;
-                break;
-            case '&':
-                idx.amp_bits[chunk] |= bit_val;
                 break;
             default:
                 break;

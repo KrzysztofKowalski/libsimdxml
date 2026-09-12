@@ -58,15 +58,15 @@ nibble_class_sse42(__m128i v, __m128i lo_table, __m128i hi_table,
                          _mm_and_si128(_mm_srli_epi16(v, 4), v_0F)));
 }
 
-/// One 64-byte chunk (4x 16-byte registers) -> eleven class masks (order:
-/// lt, gt, dq, sq, dash, rbrack, ws, slash, qmark, eq, amp). PSHUFB nibble
+/// One 64-byte chunk (4x 16-byte registers) -> nine class masks (order:
+/// lt, gt, dq, sq, dash, rbrack, ws, slash, qmark). PSHUFB nibble
 /// classification with self-contained tables and class constants.
 ///
 /// This MUST be a target-attributed free function, not a lambda inside
 /// `classify_sse42_raw`: a lambda's call operator does not inherit the
 /// enclosing function's target attribute in Clang and fails the ABI check
 /// at codegen.
-SIMDXML_ALWAYS_INLINE SIMDXML_TARGET_ISA("sse4.2") inline std::array<std::uint64_t, 11>
+SIMDXML_ALWAYS_INLINE SIMDXML_TARGET_ISA("sse4.2") inline std::array<std::uint64_t, 9>
 classify_chunk_masks_sse42(__m128i const* ptr) noexcept {
     __m128i const lo_table = _mm_setr_epi8(
         0x02, 0x00, 0x04, 0x00, 0x00, 0x00, 0x08, 0x06,
@@ -86,8 +86,6 @@ classify_chunk_masks_sse42(__m128i const* ptr) noexcept {
     __m128i const c_spc = _mm_set1_epi8(static_cast<char>(0x02));
     __m128i const c_slash = _mm_set1_epi8(static_cast<char>(0x0C));
     __m128i const c_qmark = _mm_set1_epi8(static_cast<char>(0x30));
-    __m128i const c_eq = _mm_set1_epi8(static_cast<char>(0x20));
-    __m128i const c_amp = _mm_set1_epi8(static_cast<char>(0x08));
 
     __m128i const v0 = _mm_loadu_si128(ptr);
     __m128i const v1 = _mm_loadu_si128(ptr + 1);
@@ -99,7 +97,7 @@ classify_chunk_masks_sse42(__m128i const* ptr) noexcept {
     __m128i const cls2 = nibble_class_sse42(v2, lo_table, hi_table, v_0F);
     __m128i const cls3 = nibble_class_sse42(v3, lo_table, hi_table, v_0F);
 
-    return std::array<std::uint64_t, 11>{
+    return std::array<std::uint64_t, 9>{
         movemask_64(_mm_cmpeq_epi8(cls0, c_lt), _mm_cmpeq_epi8(cls1, c_lt),
                     _mm_cmpeq_epi8(cls2, c_lt), _mm_cmpeq_epi8(cls3, c_lt)),
         movemask_64(_mm_cmpeq_epi8(cls0, c_gt), _mm_cmpeq_epi8(cls1, c_gt),
@@ -122,10 +120,6 @@ classify_chunk_masks_sse42(__m128i const* ptr) noexcept {
                     _mm_cmpeq_epi8(cls2, c_slash), _mm_cmpeq_epi8(cls3, c_slash)),
         movemask_64(_mm_cmpeq_epi8(cls0, c_qmark), _mm_cmpeq_epi8(cls1, c_qmark),
                     _mm_cmpeq_epi8(cls2, c_qmark), _mm_cmpeq_epi8(cls3, c_qmark)),
-        movemask_64(_mm_cmpeq_epi8(cls0, c_eq), _mm_cmpeq_epi8(cls1, c_eq),
-                    _mm_cmpeq_epi8(cls2, c_eq), _mm_cmpeq_epi8(cls3, c_eq)),
-        movemask_64(_mm_cmpeq_epi8(cls0, c_amp), _mm_cmpeq_epi8(cls1, c_amp),
-                    _mm_cmpeq_epi8(cls2, c_amp), _mm_cmpeq_epi8(cls3, c_amp)),
     };
 }
 
@@ -249,12 +243,13 @@ classify_sse42(std::span<std::byte const> input) noexcept {
 
 /// Raw SSE4.2 variant: classifies ONLY the quote-agnostic masks the parse
 /// state machine consumes (lt/gt raw, quotes, dash, bracket, whitespace,
-/// name delimiters, '=', '&'). Classification is PSHUFB nibble-style
+/// name delimiters). Classification is PSHUFB nibble-style
 /// (`_mm_shuffle_epi8` — SSSE3 is part of the sse4.2 target): two 16-byte
 /// tables map the low / high nibble of every byte to a class byte whose AND
 /// is the byte's class (0 = uninteresting). One classification pass feeds
-/// all eleven property masks. `lt_bits` / `gt_bits` are left empty — see
-/// `classify_structural_raw`.
+/// all nine property masks. `lt_bits` / `gt_bits` are left empty — see
+/// `classify_structural_raw`. `eq_bits` / `amp_bits` stay empty too
+/// (nobody reads them; fields kept for API compatibility).
 SIMDXML_TARGET_ISA("sse4.2") [[nodiscard]] inline StructuralIndex
 classify_sse42_raw(std::span<std::byte const> input) noexcept {
     std::size_t const len = input.size();
@@ -269,20 +264,18 @@ classify_sse42_raw(std::span<std::byte const> input) noexcept {
     idx.ws_bits.assign(num_chunks, 0);
     idx.slash_bits.assign(num_chunks, 0);
     idx.qmark_bits.assign(num_chunks, 0);
-    idx.eq_bits.assign(num_chunks, 0);
-    idx.amp_bits.assign(num_chunks, 0);
     idx.len = len;
 
     std::size_t const full_chunks = len / 64;
 
-    // One 64-byte chunk (4x 16-byte registers) -> eleven class masks
-    // (order: lt, gt, dq, sq, dash, rbrack, ws, slash, qmark, eq, amp).
+    // One 64-byte chunk (4x 16-byte registers) -> nine class masks
+    // (order: lt, gt, dq, sq, dash, rbrack, ws, slash, qmark).
     // The per-chunk work lives in detail::classify_chunk_masks_sse42 — a
     // TARGET-ATTRIBUTED free function, not a lambda (a lambda's call
     // operator does not inherit the enclosing function's target attribute
     // and fails the SSE-ABI check at codegen).
     auto const store_chunk = [&](std::size_t c,
-                                 std::array<std::uint64_t, 11> const& m) {
+                                 std::array<std::uint64_t, 9> const& m) {
         idx.lt_raw_bits[c] = m[0];
         idx.gt_raw_bits[c] = m[1];
         idx.dq_bits[c] = m[2];
@@ -292,8 +285,6 @@ classify_sse42_raw(std::span<std::byte const> input) noexcept {
         idx.ws_bits[c] = m[6];
         idx.slash_bits[c] = m[7];
         idx.qmark_bits[c] = m[8];
-        idx.eq_bits[c] = m[9];
-        idx.amp_bits[c] = m[10];
     };
 
     // Unrolled two chunks per iteration: independent chains.
@@ -326,8 +317,6 @@ classify_sse42_raw(std::span<std::byte const> input) noexcept {
         std::uint64_t ws = 0;
         std::uint64_t slash = 0;
         std::uint64_t qmark = 0;
-        std::uint64_t eq = 0;
-        std::uint64_t amp = 0;
         for (std::size_t i = remaining_start; i < len; ++i) {
             unsigned char const byte = static_cast<unsigned char>(
                 std::to_integer<std::uint8_t>(input[i]));
@@ -344,8 +333,6 @@ classify_sse42_raw(std::span<std::byte const> input) noexcept {
                     ws |= bit_val; break;
                 case '/': slash |= bit_val; break;
                 case '?': qmark |= bit_val; break;
-                case '=': eq |= bit_val; break;
-                case '&': amp |= bit_val; break;
                 default: break;
             }
         }
@@ -359,8 +346,6 @@ classify_sse42_raw(std::span<std::byte const> input) noexcept {
             idx.ws_bits[chunk_idx] = ws;
             idx.slash_bits[chunk_idx] = slash;
             idx.qmark_bits[chunk_idx] = qmark;
-            idx.eq_bits[chunk_idx] = eq;
-            idx.amp_bits[chunk_idx] = amp;
         }
     }
     return idx;

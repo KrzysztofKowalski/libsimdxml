@@ -122,9 +122,11 @@ struct StructuralIndex {
     /// Positions of every '?' byte. Filled by the `*_raw` classifiers only
     /// (PI name terminator and `?>` scanning).
     std::vector<std::uint64_t> qmark_bits;
-    /// Positions of every '=' byte. Filled by the `*_raw` classifiers only.
+    /// Positions of every '=' byte. DEAD: no classifier fills it any more
+    /// (no consumer ever read it) — the field stays for API compatibility.
     std::vector<std::uint64_t> eq_bits;
-    /// Positions of every '&' byte. Filled by the `*_raw` classifiers only.
+    /// Positions of every '&' byte. DEAD: no classifier fills it any more
+    /// (no consumer ever read it) — the field stays for API compatibility.
     std::vector<std::uint64_t> amp_bits;
     // NOTE: the `*_raw` classifiers below fill ONLY the raw mask sets
     // and leave `lt_bits` / `gt_bits` EMPTY (no quote-masking pass) — they

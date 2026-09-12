@@ -50,6 +50,22 @@ XmlIndex make_empty_index(std::span<std::byte const> input) {
     return XmlIndex(input, est_tags, est_text);
 }
 
+/// Popcount a whole mask word-vector (the exact-reserve phase).
+///
+/// POPCNT via the target attribute: without it the compiler emits the
+/// software bit-trick sequence (~10 ops per word), and that is ~32k words
+/// per 1 MB of input. POPCNT is present on every machine where `use_simd`
+/// can be true at all (SSE4.2/AVX2 imply POPCNT), so the attribute excludes
+/// no code path.
+SIMDXML_TARGET_ISA("popcnt") [[nodiscard]] inline std::size_t
+popcount_words(std::vector<std::uint64_t> const& bits) noexcept {
+    std::size_t n = 0;
+    for (std::uint64_t const b : bits) {
+        n += static_cast<std::size_t>(std::popcount(b));
+    }
+    return n;
+}
+
 /// Forward cursor over a class-mask bitset (one u64 per 64-byte chunk).
 /// `next(from)` returns the first set bit at or after `from`, walking the
 /// current 64-bit word with countr_zero and advancing to the next word when
@@ -209,12 +225,8 @@ Result<XmlIndex> parse_scalar(std::span<std::byte const> input) {
     std::size_t n_gt = 0;
     if (use_simd) {
         structural = simd::classify_structural_raw(input);
-        for (std::uint64_t const bits : structural.lt_raw_bits) {
-            n_lt += static_cast<std::size_t>(std::popcount(bits));
-        }
-        for (std::uint64_t const bits : structural.gt_raw_bits) {
-            n_gt += static_cast<std::size_t>(std::popcount(bits));
-        }
+        n_lt = popcount_words(structural.lt_raw_bits);
+        n_gt = popcount_words(structural.gt_raw_bits);
     }
 
     XmlIndex index = use_simd ? XmlIndex(input, n_lt, n_gt)

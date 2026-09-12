@@ -55,15 +55,15 @@ nibble_class_avx2(__m256i v, __m256i lo_table, __m256i hi_table,
                             _mm256_and_si256(_mm256_srli_epi16(v, 4), v_0F)));
 }
 
-/// One 64-byte chunk -> eleven class masks (order: lt, gt, dq, sq, dash,
-/// rbrack, ws, slash, qmark, eq, amp). PSHUFB nibble classification with
+/// One 64-byte chunk -> nine class masks (order: lt, gt, dq, sq, dash,
+/// rbrack, ws, slash, qmark). PSHUFB nibble classification with
 /// self-contained tables and class constants.
 ///
 /// This MUST be a target-attributed free function, not a lambda inside
 /// `classify_avx2_raw`: a lambda's call operator does not inherit the
 /// enclosing function's target attribute in Clang and fails the AVX-ABI
 /// check at codegen ("AVX vector argument ... without 'avx' enabled").
-SIMDXML_ALWAYS_INLINE SIMDXML_TARGET_ISA("avx2") inline std::array<std::uint64_t, 11>
+SIMDXML_ALWAYS_INLINE SIMDXML_TARGET_ISA("avx2") inline std::array<std::uint64_t, 9>
 classify_chunk_masks_avx2(__m256i const* ptr) noexcept {
     __m256i const lo_table = _mm256_setr_epi8(
         0x02, 0x00, 0x04, 0x00, 0x00, 0x00, 0x08, 0x06,
@@ -87,8 +87,6 @@ classify_chunk_masks_avx2(__m256i const* ptr) noexcept {
     __m256i const c_spc = _mm256_set1_epi8(static_cast<char>(0x02));
     __m256i const c_slash = _mm256_set1_epi8(static_cast<char>(0x0C));
     __m256i const c_qmark = _mm256_set1_epi8(static_cast<char>(0x30));
-    __m256i const c_eq = _mm256_set1_epi8(static_cast<char>(0x20));
-    __m256i const c_amp = _mm256_set1_epi8(static_cast<char>(0x08));
 
     __m256i const v0 = _mm256_loadu_si256(ptr);
     __m256i const v1 = _mm256_loadu_si256(ptr + 1);
@@ -96,7 +94,7 @@ classify_chunk_masks_avx2(__m256i const* ptr) noexcept {
     __m256i const cls0 = nibble_class_avx2(v0, lo_table, hi_table, v_0F);
     __m256i const cls1 = nibble_class_avx2(v1, lo_table, hi_table, v_0F);
 
-    return std::array<std::uint64_t, 11>{
+    return std::array<std::uint64_t, 9>{
         movemask_64_avx2(_mm256_cmpeq_epi8(cls0, c_lt),
                          _mm256_cmpeq_epi8(cls1, c_lt)),
         movemask_64_avx2(_mm256_cmpeq_epi8(cls0, c_gt),
@@ -119,10 +117,6 @@ classify_chunk_masks_avx2(__m256i const* ptr) noexcept {
                          _mm256_cmpeq_epi8(cls1, c_slash)),
         movemask_64_avx2(_mm256_cmpeq_epi8(cls0, c_qmark),
                          _mm256_cmpeq_epi8(cls1, c_qmark)),
-        movemask_64_avx2(_mm256_cmpeq_epi8(cls0, c_eq),
-                         _mm256_cmpeq_epi8(cls1, c_eq)),
-        movemask_64_avx2(_mm256_cmpeq_epi8(cls0, c_amp),
-                         _mm256_cmpeq_epi8(cls1, c_amp)),
     };
 }
 
@@ -233,11 +227,13 @@ classify_avx2(std::span<std::byte const> input) noexcept {
 
 /// Raw AVX2 variant: classifies ONLY the quote-agnostic masks the parse
 /// state machine consumes (lt/gt raw, quotes, dash, bracket, whitespace,
-/// name delimiters, '=', '&'). Classification is PSHUFB nibble-style: two
+/// name delimiters). Classification is PSHUFB nibble-style: two
 /// 16-byte tables map the low / high nibble of every byte to a class byte
 /// whose AND is the byte's class (0 = uninteresting). One classification
-/// pass feeds all eleven property masks. No quote state is tracked and
+/// pass feeds all nine property masks. No quote state is tracked and
 /// `lt_bits` / `gt_bits` are left empty — see `classify_structural_raw`.
+/// `eq_bits` / `amp_bits` stay empty too (nobody reads them; fields kept
+/// for API compatibility).
 SIMDXML_TARGET_ISA("avx2") [[nodiscard]] inline StructuralIndex
 classify_avx2_raw(std::span<std::byte const> input) noexcept {
     std::size_t const len = input.size();
@@ -252,14 +248,12 @@ classify_avx2_raw(std::span<std::byte const> input) noexcept {
     idx.ws_bits.assign(num_chunks, 0);
     idx.slash_bits.assign(num_chunks, 0);
     idx.qmark_bits.assign(num_chunks, 0);
-    idx.eq_bits.assign(num_chunks, 0);
-    idx.amp_bits.assign(num_chunks, 0);
     idx.len = len;
 
     std::size_t const full_chunks = len / 64;
 
-    // One 64-byte chunk -> eleven class masks (order: lt, gt, dq, sq, dash,
-    // rbrack, ws, slash, qmark, eq, amp). Inlined at both call sites of the
+    // One 64-byte chunk -> nine class masks (order: lt, gt, dq, sq, dash,
+    // rbrack, ws, slash, qmark). Inlined at both call sites of the
     // unrolled loop below so the two chunks per iteration form independent
     // dependency chains (hides the movemask latency).
     //
@@ -268,7 +262,7 @@ classify_avx2_raw(std::span<std::byte const> input) noexcept {
     // operator does not inherit the enclosing function's target attribute
     // and fails the AVX-ABI check at codegen.
     auto const store_chunk = [&](std::size_t c,
-                                 std::array<std::uint64_t, 11> const& m) {
+                                 std::array<std::uint64_t, 9> const& m) {
         idx.lt_raw_bits[c] = m[0];
         idx.gt_raw_bits[c] = m[1];
         idx.dq_bits[c] = m[2];
@@ -278,8 +272,6 @@ classify_avx2_raw(std::span<std::byte const> input) noexcept {
         idx.ws_bits[c] = m[6];
         idx.slash_bits[c] = m[7];
         idx.qmark_bits[c] = m[8];
-        idx.eq_bits[c] = m[9];
-        idx.amp_bits[c] = m[10];
     };
 
     // Unrolled two chunks per iteration: independent chains.
@@ -312,8 +304,6 @@ classify_avx2_raw(std::span<std::byte const> input) noexcept {
         std::uint64_t ws = 0;
         std::uint64_t slash = 0;
         std::uint64_t qmark = 0;
-        std::uint64_t eq = 0;
-        std::uint64_t amp = 0;
         for (std::size_t i = remaining_start; i < len; ++i) {
             unsigned char const byte = static_cast<unsigned char>(
                 std::to_integer<std::uint8_t>(input[i]));
@@ -330,8 +320,6 @@ classify_avx2_raw(std::span<std::byte const> input) noexcept {
                     ws |= bit_val; break;
                 case '/': slash |= bit_val; break;
                 case '?': qmark |= bit_val; break;
-                case '=': eq |= bit_val; break;
-                case '&': amp |= bit_val; break;
                 default: break;
             }
         }
@@ -345,8 +333,6 @@ classify_avx2_raw(std::span<std::byte const> input) noexcept {
             idx.ws_bits[chunk_idx] = ws;
             idx.slash_bits[chunk_idx] = slash;
             idx.qmark_bits[chunk_idx] = qmark;
-            idx.eq_bits[chunk_idx] = eq;
-            idx.amp_bits[chunk_idx] = amp;
         }
     }
     return idx;
