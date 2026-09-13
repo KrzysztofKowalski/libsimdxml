@@ -48,12 +48,12 @@ orchestrator: fresh process per run, cold runs discarded, medians of 9 reps
 | libsimdxml — parse (structural index)             | **251.7 MB/s** (3.98 ms)| **261.9 MB/s** (19.1 ms)| **283.4 MB/s** (35.3 ms)|
 | pugixml 1.16, in-situ (reference)                 | 207.9 MB/s (4.81 ms)    | 225.2 MB/s (22.2 ms)   | 227.1 MB/s (44.0 ms)   |
 
-Speedup of libsimdxml over pugixml 1.16: **1.21× (1 MB) / 1.16× (5 MB) →
-1.25× (10 MB)**, from the final 13.09 full-native matrix
+Speedup of libsimdxml over pugixml 1.16: **1.21× / 1.16× / 1.25×**
+(1 MB / 5 MB / 10 MB), from the final 13.09 full-native matrix
 (`rerun_crosslang_20260913_160014`: 17 parsers, 6 languages —
-C++/Python/Node/Java/Rust/Ruby — in one run, Java natively via javac, run
-confirmed within noise by an independent rerun). libsimdxml nodes/attributes
-counts are bit-identical to pugixml and expat at every size.
+C++/Python/Node/Java/Rust/Ruby — in one run, Java natively via javac). The
+numbers reproduce across independent runs within ~3% noise. libsimdxml
+nodes/attributes counts are bit-identical to pugixml and expat at every size.
 
 Earlier in-process A/B harness (100+ alternating runs, pre-fusion code):
 parse 351/374 MB/s (1.26×/1.36× vs pugixml), full index 285/300 MB/s
