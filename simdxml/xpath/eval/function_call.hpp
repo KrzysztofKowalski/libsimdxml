@@ -18,7 +18,7 @@
 
 #include "internal.hpp"
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Evaluate an XPath 1.0 core function call. Returns the result value.
 /// Mirrors Rust `eval_function`.
@@ -34,4 +34,4 @@ eval_function(XmlIndex const& index, XPathNode const& node,
 eval_id_function(XmlIndex const& index,
                  std::vector<std::unique_ptr<XPathExpr>> const& args);
 
-}  // namespace simdxml
+}  // namespace rai::xml

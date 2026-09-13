@@ -15,7 +15,7 @@
 #include <string>
 #include <string_view>
 
-namespace simdxml {
+namespace rai::xml {
 
 // Forward declarations of types ported in later phases. They are referenced
 // by the public API below so that this header compiles standalone.
@@ -49,4 +49,4 @@ parse_for_xpath(std::span<std::byte const> input, std::string_view xpath_str);
 [[nodiscard]] Result<OwnedXmlIndex>
 load_or_parse(std::string_view xml_path);
 
-}  // namespace simdxml
+}  // namespace rai::xml

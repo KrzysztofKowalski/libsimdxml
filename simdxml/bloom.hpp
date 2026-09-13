@@ -15,7 +15,7 @@
 #include <string_view>
 #include <utility>
 
-namespace simdxml {
+namespace rai::xml {
 
 class XmlIndex;  // forward declaration — defined in index module
 
@@ -140,4 +140,4 @@ private:
     }
 };
 
-}  // namespace simdxml
+}  // namespace rai::xml

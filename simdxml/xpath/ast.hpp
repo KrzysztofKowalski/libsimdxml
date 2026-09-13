@@ -13,7 +13,7 @@
 #include <variant>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// The 13 XPath 1.0 axes.
 enum class Axis {
@@ -244,4 +244,4 @@ inline Step& Step::operator=(Step const& other) {
 inline Step& Step::operator=(Step&&) noexcept = default;
 inline Step::~Step() = default;
 
-}  // namespace simdxml
+}  // namespace rai::xml

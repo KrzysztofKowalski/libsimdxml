@@ -24,7 +24,7 @@
 #include <immintrin.h>
 #endif
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Tag type classification. Mirrors Rust `TagType` enum (`#[repr(u8)]`).
 enum class TagType : std::uint8_t {
@@ -283,4 +283,4 @@ private:
     }
 };
 
-}  // namespace simdxml
+}  // namespace rai::xml

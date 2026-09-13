@@ -21,7 +21,7 @@
 #include <string_view>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Minimum candidates to trigger batched evaluation.
 /// Below this threshold, per-node evaluation is faster (lower overhead).
@@ -41,4 +41,4 @@ batch_starts_with(XmlIndex const& index,
                  std::vector<XPathNode> const& candidates,
                  std::string_view prefix);
 
-}  // namespace simdxml
+}  // namespace rai::xml

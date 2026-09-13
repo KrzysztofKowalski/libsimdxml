@@ -10,7 +10,7 @@
 #include <string>
 #include <unordered_set>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -99,4 +99,4 @@ SelectivityHint selectivity(XPathExpr const& expr) {
     return SelectivityHint::selective(std::move(names));
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

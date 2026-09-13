@@ -25,7 +25,7 @@
 #include <string>
 #include <string_view>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Parse an XPath 1.0 expression string into an `XPathExpr` AST.
 [[nodiscard]] Result<XPathExpr>
@@ -35,4 +35,4 @@ parse_xpath(std::string_view input);
 [[nodiscard]] Result<XPathExpr>
 parse_xpath_predicate_expr(std::string_view input);
 
-}  // namespace simdxml
+}  // namespace rai::xml

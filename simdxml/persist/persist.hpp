@@ -33,7 +33,7 @@
 #include <string_view>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// A self-contained index that owns both the XML bytes and the structural index.
 ///
@@ -81,4 +81,4 @@ load_index_with_bytes(std::filesystem::path const& sxi_path,
 [[nodiscard]] Result<OwnedXmlIndex>
 load_or_parse(std::filesystem::path const& xml_path);
 
-}  // namespace simdxml
+}  // namespace rai::xml

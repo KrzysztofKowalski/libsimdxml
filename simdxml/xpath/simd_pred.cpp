@@ -19,7 +19,7 @@
 #include <string_view>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -149,4 +149,4 @@ batch_starts_with(XmlIndex const& index,
     return results;
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

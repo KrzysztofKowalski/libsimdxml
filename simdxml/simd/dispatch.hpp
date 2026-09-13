@@ -85,7 +85,7 @@
 #define SIMDXML_HAS_SSE42 0
 #endif
 
-namespace simdxml::simd {
+namespace rai::xml::simd {
 
 /// Structural positions extracted from SIMD classification.
 /// Each u64 is a bitmask over a 64-byte chunk of input.
@@ -170,7 +170,7 @@ private:
     }
 };
 
-}  // namespace simdxml::simd
+}  // namespace rai::xml::simd
 
 // Include backends so the dispatcher below can call them. The backends
 // `#include "dispatch.hpp"` themselves, but the `#pragma once` guard above
@@ -187,7 +187,7 @@ private:
 #include "simd/neon.hpp"
 #endif
 
-namespace simdxml::simd {
+namespace rai::xml::simd {
 
 /// Detect AVX2 support at runtime. Returns false on non-x86_64 platforms.
 [[nodiscard]] inline bool has_avx2() noexcept {
@@ -283,4 +283,4 @@ classify_structural_raw(std::span<std::byte const> input) {
     return classify_scalar_raw(input);
 }
 
-}  // namespace simdxml::simd
+}  // namespace rai::xml::simd

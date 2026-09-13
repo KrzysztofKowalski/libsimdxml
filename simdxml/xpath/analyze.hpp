@@ -11,7 +11,7 @@
 #include <string>
 #include <unordered_set>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Result of analyzing an XPath expression for selective parsing.
 struct SelectivityHint {
@@ -44,4 +44,4 @@ struct SelectivityHint {
 [[nodiscard]] SelectivityHint
 selectivity(XPathExpr const& expr);
 
-}  // namespace simdxml
+}  // namespace rai::xml

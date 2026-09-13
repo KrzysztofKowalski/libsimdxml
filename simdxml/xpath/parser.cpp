@@ -27,7 +27,7 @@
 #include <utility>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -982,4 +982,4 @@ parse_xpath_predicate_expr(std::string_view input) {
     return std::move(*r);
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

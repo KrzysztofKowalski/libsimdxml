@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -369,4 +369,4 @@ XmlIndex::get_namespace_decls(std::size_t tag_idx) const {
     return result;
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

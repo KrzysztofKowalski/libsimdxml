@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 class CompiledXPath;  // forward declaration — Phase 5
 
@@ -49,4 +49,4 @@ count_batch(std::span<std::span<std::byte const> const> docs,
 eval_batch_parallel(std::span<std::span<std::byte const> const> docs,
                      CompiledXPath const& xpath, std::size_t max_threads);
 
-}  // namespace simdxml
+}  // namespace rai::xml

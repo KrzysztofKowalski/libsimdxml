@@ -13,7 +13,7 @@
 
 #include "internal.hpp"
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Evaluate a single XPath axis for a single context node, returning the
 /// candidate nodes BEFORE predicate filtering (no node-test filtering either,
@@ -38,4 +38,4 @@ eval_step(XmlIndex const& index,
 matches_node_test(XmlIndex const& index, XPathNode const& node,
                   NodeTest const& test);
 
-}  // namespace simdxml
+}  // namespace rai::xml

@@ -19,7 +19,7 @@
 #include <thread>
 #include <utility>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -748,4 +748,4 @@ build_close_map_and_post_order(std::span<TagType const> tag_types, std::size_t n
     return {std::move(close_map), std::move(post_order)};
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

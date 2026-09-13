@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -579,4 +579,4 @@ eval_step(XmlIndex const& index,
     return result;
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

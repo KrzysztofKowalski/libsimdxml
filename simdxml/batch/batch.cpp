@@ -1,7 +1,7 @@
 // Implementation of batch XPath evaluation.
 //
 // Ported from Rust `batch/mod.rs`. The function bodies here depend on
-// `CompiledXPath` (Phase 5) and on the public `simdxml::parse` entry point
+// `CompiledXPath` (Phase 5) and on the public `rai::xml::parse` entry point
 // (defined in `simdxml.hpp` once all phases are linked). To keep the link
 // surface stable across phases, the implementations are gated on the
 // `SIMDXML_HAVE_XPATH` macro defined once `xpath/` is available.
@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 // constexpr std::size_t LARGE_DOC_THRESHOLD = 256 * 1024;  // 256 KB (Phase 5) — unused — silenced
@@ -105,4 +105,4 @@ eval_batch_parallel(std::span<std::span<std::byte const> const>,
 }
 #endif  // SIMDXML_HAVE_XPATH
 
-}  // namespace simdxml
+}  // namespace rai::xml

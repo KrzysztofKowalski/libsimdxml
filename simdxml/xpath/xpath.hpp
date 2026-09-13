@@ -23,7 +23,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Compiled XPath expression — reusable across documents.
 ///
@@ -72,4 +72,4 @@ private:
     XPathExpr expr_;
 };
 
-}  // namespace simdxml
+}  // namespace rai::xml

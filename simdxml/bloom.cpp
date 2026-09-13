@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <cstring>
 
-namespace simdxml {
+namespace rai::xml {
 
 TagBloom TagBloom::from_prescan(std::span<std::byte const> input) noexcept {
     TagBloom bloom = TagBloom::EMPTY();
@@ -68,4 +68,4 @@ TagBloom TagBloom::from_index(XmlIndex const& index) {
     return bloom;
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

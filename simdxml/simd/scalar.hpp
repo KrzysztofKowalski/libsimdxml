@@ -12,7 +12,7 @@
 #include <span>
 #include <vector>
 
-namespace simdxml::simd {
+namespace rai::xml::simd {
 
 /// Scalar fallback: byte-at-a-time classification.
 ///
@@ -132,4 +132,4 @@ classify_scalar_raw(std::span<std::byte const> input) {
     return idx;
 }
 
-}  // namespace simdxml::simd
+}  // namespace rai::xml::simd

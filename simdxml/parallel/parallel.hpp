@@ -21,7 +21,7 @@
 #include <cstddef>
 #include <span>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Parse XML using multiple threads.
 ///
@@ -34,4 +34,4 @@ parse_parallel(std::span<std::byte const> input, std::size_t num_threads);
 [[nodiscard]] Result<XmlIndex>
 parse_parallel_indexed(std::span<std::byte const> input, std::size_t num_threads);
 
-}  // namespace simdxml
+}  // namespace rai::xml

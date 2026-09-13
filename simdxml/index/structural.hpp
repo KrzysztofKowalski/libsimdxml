@@ -4,7 +4,7 @@
 //   - `parse_scalar`    — memchr-based scanner (text-heavy XML)
 //   - `parse_two_stage` — SIMD two-stage classifier (attribute-heavy XML)
 //
-// The `simdxml::parse` entry point (defined in `simdxml.hpp` in a later phase)
+// The `rai::xml::parse` entry point (defined in `simdxml.hpp` in a later phase)
 // selects between them using a `quote_ratio` heuristic. Both produce the same
 // `XmlIndex` arrays.
 #pragma once
@@ -14,7 +14,7 @@
 
 #include <span>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Build an `XmlIndex` from XML bytes using memchr-based scanning.
 /// Mirrors Rust `parse_scalar`. Jumps directly between `<` characters using
@@ -26,4 +26,4 @@ namespace simdxml {
 /// byte with SIMD vector ops; Stage 2 walks the bitmasks.
 [[nodiscard]] Result<XmlIndex> parse_two_stage(std::span<std::byte const> input);
 
-}  // namespace simdxml
+}  // namespace rai::xml

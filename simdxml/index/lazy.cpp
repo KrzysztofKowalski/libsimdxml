@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -292,4 +292,4 @@ parse_for_query(std::span<std::byte const> input,
     return index;
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

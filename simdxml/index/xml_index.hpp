@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Flat-array structural index — no DOM tree.
 ///
@@ -220,4 +220,4 @@ build_csr_text_children(std::span<TextRange const> text_ranges, std::size_t n);
 build_close_map_and_post_order(std::span<TagType const> tag_types, std::size_t n);
 ///@}
 
-}  // namespace simdxml
+}  // namespace rai::xml

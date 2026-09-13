@@ -37,7 +37,7 @@
 #include <utility>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 Result<XpathValue>
 eval_predicate_value(XmlIndex const& index, XPathNode const& node,
@@ -422,4 +422,4 @@ XPathResult::to_display_string(XmlIndex const& index) const {
     return {};
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

@@ -16,7 +16,7 @@
 
 #include "internal.hpp"
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Compare two `XpathValue`s under an XPath 1.0 binary operator.
 /// Returns the boolean result. Mirrors Rust `compare_values`.
@@ -31,4 +31,4 @@ compare_values(XpathValue const& left, BinaryOp op,
 eval_binary_op_scalar(BinaryOp op, XpathValue const& left,
                       XpathValue const& right);
 
-}  // namespace simdxml
+}  // namespace rai::xml

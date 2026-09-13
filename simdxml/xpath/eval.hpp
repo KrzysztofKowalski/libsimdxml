@@ -16,7 +16,7 @@
 #include <variant>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// A node in the XPath result set.
 ///
@@ -148,4 +148,4 @@ eval_standalone_expr(std::string_view expr_str);
 evaluate_from_context(XmlIndex const& index, XPathExpr const& expr,
                       XPathNode context_node);
 
-}  // namespace simdxml
+}  // namespace rai::xml

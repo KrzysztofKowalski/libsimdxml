@@ -14,7 +14,7 @@
 #include <string>
 #include <unordered_set>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Parse XML, only indexing tags with names in `interesting_names` and their
 /// ancestors. Falls back to full parsing if `interesting_names` is empty.
@@ -22,4 +22,4 @@ namespace simdxml {
 parse_for_query(std::span<std::byte const> input,
                 std::unordered_set<std::string> const& interesting_names);
 
-}  // namespace simdxml
+}  // namespace rai::xml

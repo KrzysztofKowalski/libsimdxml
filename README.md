@@ -120,7 +120,7 @@ int main() {
     auto bytes = std::as_bytes(std::span{xml.data(), xml.size()});
 
     // Parse: single pass, zero copy, runtime-dispatched SIMD.
-    auto idx = simdxml::parse(bytes);
+    auto idx = rai::xml::parse(bytes);
     if (!idx) {
         std::cerr << "parse error\n";
         return 1;
@@ -144,7 +144,7 @@ XPath 1.0:
 ```cpp
 #include <simdxml/xpath/xpath.hpp>
 
-auto xp  = simdxml::CompiledXPath::compile("//book/title");
+auto xp  = rai::xml::CompiledXPath::compile("//book/title");
 auto res = xp->eval(*idx);
 if (res) {
     for (auto const& node : *res) { /* ... */ }

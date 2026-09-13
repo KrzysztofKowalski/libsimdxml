@@ -31,7 +31,7 @@
 #include <arm_neon.h>
 #endif
 
-namespace simdxml::simd {
+namespace rai::xml::simd {
 
 #if SIMDXML_HAS_NEON
 
@@ -237,4 +237,4 @@ classify_neon_raw(std::span<std::byte const> input) noexcept {
 
 #endif  // SIMDXML_HAS_NEON
 
-}  // namespace simdxml::simd
+}  // namespace rai::xml::simd

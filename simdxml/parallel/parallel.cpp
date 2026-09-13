@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -415,4 +415,4 @@ parse_parallel_indexed(std::span<std::byte const> input, std::size_t num_threads
     return result;
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

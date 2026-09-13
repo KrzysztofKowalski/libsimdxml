@@ -29,7 +29,7 @@
 #include <immintrin.h>
 #endif
 
-namespace simdxml::simd {
+namespace rai::xml::simd {
 
 #if SIMDXML_HAS_SSE42
 
@@ -353,4 +353,4 @@ classify_sse42_raw(std::span<std::byte const> input) noexcept {
 
 #endif  // SIMDXML_HAS_SSE42
 
-}  // namespace simdxml::simd
+}  // namespace rai::xml::simd

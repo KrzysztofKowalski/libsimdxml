@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -527,4 +527,4 @@ load_or_parse(std::filesystem::path const& xml_path) {
     return OwnedXmlIndex(std::move(xml_bytes), std::move(index));
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

@@ -16,7 +16,7 @@
 #include <utility>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -234,4 +234,4 @@ apply_predicate(XmlIndex const& index,
     }
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

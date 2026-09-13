@@ -9,7 +9,7 @@
 #include <cmath>
 #include <string>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -101,4 +101,4 @@ eval_binary_op_scalar(BinaryOp op, XpathValue const& left,
         "Unknown binary operator"));
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

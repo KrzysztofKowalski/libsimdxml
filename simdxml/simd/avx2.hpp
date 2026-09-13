@@ -28,7 +28,7 @@
 #include <immintrin.h>
 #endif
 
-namespace simdxml::simd {
+namespace rai::xml::simd {
 
 #if SIMDXML_HAS_AVX2
 
@@ -340,4 +340,4 @@ classify_avx2_raw(std::span<std::byte const> input) noexcept {
 
 #endif  // SIMDXML_HAS_AVX2
 
-}  // namespace simdxml::simd
+}  // namespace rai::xml::simd

@@ -20,7 +20,7 @@
 
 #include "internal.hpp"
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Apply a predicate to filter a node set.
 /// Mirrors Rust `apply_predicate`.
@@ -36,4 +36,4 @@ apply_predicate(XmlIndex const& index,
     std::tuple<std::string, std::string, std::size_t>>
 extract_simple_attr_eq(std::vector<std::unique_ptr<XPathExpr>> const& preds);
 
-}  // namespace simdxml
+}  // namespace rai::xml

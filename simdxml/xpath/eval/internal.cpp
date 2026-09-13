@@ -23,7 +23,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 std::uint64_t
 attr_name_hash(std::string_view name) noexcept {
@@ -289,4 +289,4 @@ void sort_doc_order(XmlIndex const& index, std::vector<XPathNode>& nodes) {
         });
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

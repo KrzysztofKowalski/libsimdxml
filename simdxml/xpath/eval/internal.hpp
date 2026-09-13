@@ -20,7 +20,7 @@
 #include <string_view>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Polymorphic XPath value during evaluation.
 ///
@@ -134,4 +134,4 @@ evaluate_in_context(XmlIndex const& index, XPathNode const& context_node,
 evaluate_from_context_impl(XmlIndex const& index, XPathExpr const& expr,
                            XPathNode const& context_node);
 
-}  // namespace simdxml
+}  // namespace rai::xml

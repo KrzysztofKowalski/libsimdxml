@@ -28,7 +28,7 @@
 #define SIMDXML_ALWAYS_INLINE [[gnu::always_inline]]
 #endif
 
-namespace simdxml::simd::detail {
+namespace rai::xml::simd::detail {
 
 /// Compute prefix-XOR: bit i of result = XOR of bits 0..=i in mask.
 /// Scalar shift-and-XOR chain (6 ops on a u64).
@@ -140,4 +140,4 @@ apply_quote_mask(std::uint64_t lt_mask, std::uint64_t gt_mask,
                                  in_dquote, in_squote);
 }
 
-}  // namespace simdxml::simd::detail
+}  // namespace rai::xml::simd::detail

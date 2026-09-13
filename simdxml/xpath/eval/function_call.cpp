@@ -15,7 +15,7 @@
 #include <string_view>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -590,4 +590,4 @@ eval_function(XmlIndex const& index, XPathNode const& node,
     return XpathValue::string(std::string{});
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

@@ -16,7 +16,7 @@
 #include <utility>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -845,4 +845,4 @@ Result<XmlIndex> parse(std::span<std::byte const> input) {
     return parse_scalar(input);
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

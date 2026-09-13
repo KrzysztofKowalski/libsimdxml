@@ -10,7 +10,7 @@
 
 #include <string>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Evaluate a string literal to an `XpathValue`.
 [[nodiscard]] inline XpathValue
@@ -30,4 +30,4 @@ eval_boolean_literal(bool literal) noexcept {
     return XpathValue::boolean(literal);
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

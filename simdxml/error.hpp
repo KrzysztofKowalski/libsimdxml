@@ -14,7 +14,7 @@
 #include <string_view>
 #include <variant>
 
-namespace simdxml {
+namespace rai::xml {
 
 /// All errors produced by simdxml.
 ///
@@ -170,13 +170,13 @@ private:
 template <typename T>
 using Result = std::expected<T, SimdXmlError>;
 
-}  // namespace simdxml
+}  // namespace rai::xml
 
 /// Inject a formatter specialization for `std::format` compatibility.
 template <>
-struct std::formatter<simdxml::SimdXmlError> : std::formatter<std::string> {
+struct std::formatter<rai::xml::SimdXmlError> : std::formatter<std::string> {
     template <typename FormatContext>
-    auto format(simdxml::SimdXmlError const& e, FormatContext& ctx) const {
+    auto format(rai::xml::SimdXmlError const& e, FormatContext& ctx) const {
         return std::formatter<std::string>::format(e.to_string(), ctx);
     }
 };

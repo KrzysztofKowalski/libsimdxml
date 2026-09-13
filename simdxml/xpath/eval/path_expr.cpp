@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-namespace simdxml {
+namespace rai::xml {
 
 namespace {
 
@@ -479,4 +479,4 @@ evaluate_from_context_impl(XmlIndex const& index, XPathExpr const& expr,
     }
 }
 
-}  // namespace simdxml
+}  // namespace rai::xml

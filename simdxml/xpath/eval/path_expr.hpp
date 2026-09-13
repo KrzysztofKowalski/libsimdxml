@@ -16,7 +16,7 @@
 
 #include "internal.hpp"
 
-namespace simdxml {
+namespace rai::xml {
 
 /// Evaluate a relative or absolute location path from the document root
 /// context. Mirrors Rust `eval_location_path`.
@@ -37,4 +37,4 @@ eval_fused_descendant_child_with_preds(XmlIndex const& index,
                                        std::vector<XPathNode> const& context,
                                        Step const& child_step);
 
-}  // namespace simdxml
+}  // namespace rai::xml
