@@ -36,14 +36,10 @@ are reproducible:
 
 ### Parse speed (MB/s)
 
-Measured on an Intel Core i7-4850HQ (Haswell, 2013 laptop, 2.3 GHz base clock),
-C++23. Sequential benchmark orchestrator: fresh process per run, cold runs
-discarded, one process at a time, thermal abort at 100 °C (no cooldown gating),
-medians of 9 reps (2 cold discarded). Since 13.09 the machine runs at its
-deterministic base clock — turbo is locked out at firmware/SMC level
-(`scaling_max_freq` stays at 2.3 GHz even idle, `no_turbo=0` does not help) —
-so these runs are reproducible; compare ratios, not absolute values against
-earlier runs that had turbo active.
+Measured on an Intel Core i7-4850HQ (Haswell, 2013 laptop) at the CPU's
+deterministic base clock (2.3 GHz, no turbo). Sequential benchmark
+orchestrator: fresh process per run, cold runs discarded, medians of 9 reps
+(2 cold discarded) — ratios within one run are the point.
 
 | Workload                                          | sample_1mb.xml          | sample_5mb.xml         | sample_10mb.xml        |
 |---------------------------------------------------|-------------------------|------------------------|------------------------|
@@ -53,10 +49,8 @@ earlier runs that had turbo active.
 Speedup of libsimdxml over pugixml 1.16: **1.21× (1 MB) → 1.29× (10 MB)**, from
 the final 13.09 full-native matrix (`rerun_crosslang_20260913_123107`: 17
 parsers, 6 languages — C++/Python/Node/Java/Rust/Ruby — in one run, Java
-natively via javac, no Docker). The earlier turbo-era runs measured higher
-absolute values (up to 414 MB/s @ 30 MB, 1.40×) — the ratio is the point, the
-gap grows with input size as fixed per-parse costs amortize. libsimdxml
-nodes/attributes counts are bit-identical to pugixml and expat at every size.
+natively via javac). libsimdxml nodes/attributes counts are bit-identical to
+pugixml and expat at every size.
 
 Earlier in-process A/B harness (100+ alternating runs, pre-fusion code):
 parse 351/374 MB/s (1.26×/1.36× vs pugixml), full index 285/300 MB/s
@@ -93,11 +87,7 @@ Rust's quick-xml is the fastest non-C++ parser (~195 MB/s, flat across sizes;
 (1 MB/5 MB/10 MB). Versions: Java natively on this host (javac, JDK 27);
 quick-xml 0.36.2, roxmltree 0.20.0; nokogiri 1.19.4, rexml 3.4.4. tinyxml2 and
 fast-xml-parser error out on the `<?bench-pi…?>` corpus (a pre-existing entity
-limit / PI-node limitation, not a bug) and are excluded. Full medians (all
-sizes, ms/mean/p95/memory) ship in `docs/analiza_perf_2026-09-12.html`.
-
-Numbers come from a 2013 laptop; the ratios, not the absolute values, are the
-point.
+limit / PI-node limitation, not a bug) and are excluded.
 
 ## Usage
 
