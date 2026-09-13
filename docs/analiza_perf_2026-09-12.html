@@ -109,25 +109,25 @@
   <tr><td>sample_30mb</td><td>406</td><td class="good">414,2</td><td>+2,0%</td><td>336</td><td>295,2</td><td>1,21×</td><td class="good">1,40×</td></tr>
 </table>
 </div>
-<p class="note">Wartości w MB/s, mediana z 9 repów (2 odrzucone). Przewaga rośnie z rozmiarem — koszty stałe per parse amortyzują się, a przewaga SIMD rośnie.</p>
+<p class="note">Wartości w MB/s, mediana z 9 repów (2 odrzucone). Przewaga rośnie z rozmiarem — koszty stałe per parse amortyzują się, a przewaga SIMD rośnie.<br><strong class="good">Rerun 13.09</strong> (matryca 1/5/10 mb, 0 cooldownów, termo-abort ≥100 °C): simdxml 350,9/376,3/404,9 vs pugixml 298,2/321,6/322,1 → <strong class="good">1,18×/1,17×/1,26×</strong>. Wartości bezwzględne wyższe niż r3 (zimna maszyna, brak cooldownów) — porównywać stosunki, nie surową liczbę.</p>
 
 <h2><span class="no">2.</span>Kontekst cross-language @1 mb (ten sam plik, ten sam run)</h2>
 <div class="chart">
-  <div class="row top"><div class="lbl">libsimdxml (C++)</div><div class="track"><div class="bar" style="width:100%"></div></div><div class="val good">308 MB/s · 3,25 ms</div></div>
-  <div class="row ref"><div class="lbl">pugixml 1.16 (C++)</div><div class="track"><div class="bar" style="width:96%"></div></div><div class="val">296 · 3,39 ms</div></div>
-  <div class="row"><div class="lbl">expat (C++, SAX)</div><div class="track"><div class="bar" style="width:31%"></div></div><div class="val">94,3 · 10,6 ms</div></div>
-  <div class="row"><div class="lbl">lxml (Python)</div><div class="track"><div class="bar" style="width:14.5%"></div></div><div class="val">44,6 · 22,4 ms</div></div>
-  <div class="row"><div class="lbl">libxml2 (C++)</div><div class="track"><div class="bar" style="width:12.8%"></div></div><div class="val">39,4 · 25,4 ms</div></div>
-  <div class="row"><div class="lbl">lxml.html (Python)</div><div class="track"><div class="bar" style="width:9.8%"></div></div><div class="val">30,2 · 33,2 ms</div></div>
-  <div class="row"><div class="lbl">cheerio (Node)</div><div class="track"><div class="bar" style="width:4.7%"></div></div><div class="val">14,6 · 68,7 ms</div></div>
-  <div class="row"><div class="lbl">sax (Node)</div><div class="track"><div class="bar" style="width:3.6%"></div></div><div class="val">11,1 · 89,8 ms</div></div>
-  <div class="row"><div class="lbl">xml.etree (Python)</div><div class="track"><div class="bar" style="width:3.0%"></div></div><div class="val">9,1 · 109,5 ms</div></div>
-  <div class="row"><div class="lbl">Xerces (Java)</div><div class="track"><div class="bar" style="width:2.8%"></div></div><div class="val">~8,5 · 124 ms</div></div>
-  <div class="row"><div class="lbl">jsoup (Java)</div><div class="track"><div class="bar" style="width:1.9%"></div></div><div class="val">~5,9 · 179 ms</div></div>
-  <div class="row"><div class="lbl">dom4j (Java)</div><div class="track"><div class="bar" style="width:1.8%"></div></div><div class="val">~5,6 · 189 ms</div></div>
-  <div class="row"><div class="lbl">html.parser (Python)</div><div class="track"><div class="bar" style="width:0.4%"></div></div><div class="val">~1,0 · 1012 ms</div></div>
+  <div class="row top"><div class="lbl">libsimdxml (C++)</div><div class="track"><div class="bar" style="width:100%"></div></div><div class="val good">351 MB/s · 2,85 ms</div></div>
+  <div class="row ref"><div class="lbl">pugixml 1.16 (C++)</div><div class="track"><div class="bar" style="width:85%"></div></div><div class="val">298,2 · 3,36 ms</div></div>
+  <div class="row"><div class="lbl">expat (C++, SAX)</div><div class="track"><div class="bar" style="width:26.8%"></div></div><div class="val">93,9 · 10,7 ms</div></div>
+  <div class="row"><div class="lbl">lxml (Python)</div><div class="track"><div class="bar" style="width:12.7%"></div></div><div class="val">44,6 · 22,4 ms</div></div>
+  <div class="row"><div class="lbl">libxml2 (C++)</div><div class="track"><div class="bar" style="width:11.8%"></div></div><div class="val">41,3 · 24,2 ms</div></div>
+  <div class="row"><div class="lbl">lxml.html (Python)</div><div class="track"><div class="bar" style="width:8.3%"></div></div><div class="val">29,3 · 34,1 ms</div></div>
+  <div class="row"><div class="lbl">cheerio (Node)</div><div class="track"><div class="bar" style="width:4.1%"></div></div><div class="val">14,5 · 68,9 ms</div></div>
+  <div class="row"><div class="lbl">sax (Node)</div><div class="track"><div class="bar" style="width:3.2%"></div></div><div class="val">11,1 · 89,9 ms</div></div>
+  <div class="row"><div class="lbl">xml.etree (Python)</div><div class="track"><div class="bar" style="width:2.5%"></div></div><div class="val">8,9 · 112,7 ms</div></div>
+  <div class="row"><div class="lbl">Xerces (Java)</div><div class="track"><div class="bar" style="width:2.4%"></div></div><div class="val">~8,5 · 124 ms</div></div>
+  <div class="row"><div class="lbl">jsoup (Java)</div><div class="track"><div class="bar" style="width:1.7%"></div></div><div class="val">~5,9 · 179 ms</div></div>
+  <div class="row"><div class="lbl">dom4j (Java)</div><div class="track"><div class="bar" style="width:1.6%"></div></div><div class="val">~5,6 · 189 ms</div></div>
+  <div class="row"><div class="lbl">html.parser (Python)</div><div class="track"><div class="bar" style="width:0.3%"></div></div><div class="val">~1,0 · 1015 ms</div></div>
 </div>
-<p class="note">Mediana tego samego runu (72 kombinacje, cooldownów 20). Wiersze JVM z wcześniejszego runu Docker-JVM tym samym harnessem. Słupki proporcjonalne do MB/s względem libsimdxml = 100%.</p>
+<p class="note">Rerun 13.09 po H1/H2: 36 kombinacji, 0 cooldownów, termo-abort ≥100 °C. Wiersze JVM z wcześniejszego runu Docker-JVM tym samym harnessem. Słupki proporcjonalne do MB/s względem libsimdxml = 100%.</p>
 
 <h2><span class="no">3.</span>F-harness in-process: ewolucja przez 3 rundy</h2>
 <p>Ciepły pomiar w procesie, naprzemiennie A/B (100+ przebiegów), gate termiczny. Inny reżim niż orchestrator — liczby między harnessami nie są porównywalne 1:1, wewnątrz jednego harnessu tak.</p>
@@ -202,14 +202,14 @@
 
 <h2><span class="no">8.</span>Otwarte / następne kroki</h2>
 <ul>
-  <li>Pełny cross-language re-run po H1/H2 (<code>--lang cpp,python,node</code>, jeden run) — odświeży tabelę sekcji 2.</li>
-  <li>Push official (4 commity na main: fuzja + README + hot-path + README 333/380/414).</li>
-  <li>Ew. weryfikacja regresji fuzji @1 mb (bench ze starym structural.cpp, naprzemiennie).</li>
+  <li><s>Pełny cross-language re-run po H1/H2</s> — <strong class="good">zrobiony 13.09</strong>: 350,9/376,3/404,9 MB/s (1/5/10 mb), 1,18×→1,26× vs pugixml; README + ta analiza odświeżone.</li>
+  <li>Ew. weryfikacja regresji fuzji @1 mb (bench ze starym structural.cpp, naprzemiennie) — nadal otwarte.</li>
   <li>Java w jednym runie z cpp/python/node (mixed-mode orchestratora: buduj obraz bench-java gdy java ∈ LANGS, timeout wokół docker run).</li>
+  <li>Opcjonalnie: fast-xml-parser do matrycy z <code>processEntities: { maxTotalExpansions: N }</code> (limit 1000 < ~6,6 tys. encji korpusu).</li>
 </ul>
 
 <footer>
-Źródła: <code>tmp/benchmark/results/REPORT.md</code> (run 08.09 18:58 + run 12.09), <code>tmp/pugixml_analiza/ab_*.tsv</code>, <code>tmp/faza0_dispatch</code> niezmienność, commity <code>abe8f253a2</code> / <code>cfc7b32281</code> / <code>580f7bb335</code> / <code>6d45cf4a4a</code> (libs), <code>0201a63</code> / <code>7208140</code> / <code>5609d10</code> / <code>4bf51b3</code> (official). Wygenerowano 12.09.2026.
+Źródła: <code>tmp/benchmark/results/REPORT.md</code> (run 08.09 18:58 + run 12.09), <code>tmp/benchmark/results/rerun_crosslang_20260913_022543/</code> (re-run 13.09), <code>tmp/pugixml_analiza/ab_*.tsv</code>, <code>tmp/faza0_dispatch</code> niezmienność, commity <code>abe8f253a2</code> / <code>cfc7b32281</code> / <code>580f7bb335</code> / <code>6d45cf4a4a</code> (libs), <code>0201a63</code> / <code>7208140</code> / <code>5609d10</code> / <code>4bf51b3</code> (official). Wygenerowano 12.09.2026, aktualizacja 13.09 (re-run cross-language po H1/H2).
 </footer>
 
 </main>

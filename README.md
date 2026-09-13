@@ -38,16 +38,19 @@ are reproducible:
 
 Measured on an Intel Core i7-4850HQ (Haswell, 2013 laptop, 2.3 GHz), C++23.
 Sequential benchmark orchestrator: fresh process per run, cold runs discarded,
-one process at a time, thermal-gated (cooldowns at 85 °C).
+one process at a time, thermal abort at 100 °C (no cooldown gating).
 
-| Workload                                          | sample_1mb.xml          | sample_10mb.xml        | sample_30mb.xml        |
+| Workload                                          | sample_1mb.xml          | sample_5mb.xml         | sample_10mb.xml        |
 |---------------------------------------------------|-------------------------|------------------------|------------------------|
-| libsimdxml — parse (structural index)             | **333 MB/s** (3.00 ms)  | **380 MB/s** (26.3 ms) | **414 MB/s** (72.4 ms) |
-| pugixml 1.16, in-situ (reference)                 | 288 MB/s (3.47 ms)      | 302 MB/s (33.1 ms)     | 295 MB/s (101.6 ms)    |
+| libsimdxml — parse (structural index)             | **351 MB/s** (2.85 ms)  | **376 MB/s** (13.3 ms) | **405 MB/s** (24.7 ms) |
+| pugixml 1.16, in-situ (reference)                 | 298 MB/s (3.36 ms)      | 322 MB/s (15.5 ms)     | 322 MB/s (31.1 ms)     |
 
-Speedup of libsimdxml over pugixml 1.16: **1.16× (1 MB) → 1.40× (30 MB)** —
-the gap grows with input size as fixed per-parse costs amortize. libsimdxml
-nodes/attributes counts are bit-identical to pugixml and expat at every size.
+Speedup of libsimdxml over pugixml 1.16: **1.18× (1 MB) → 1.26× (10 MB)**,
+from the 13.09 rerun of the full cpp/python/node matrix. The earlier 12.09
+run (cooldown-gated policy) measured 1.16×/1.12×/1.26× on the same sizes and
+reached **1.40× at 30 MB** (414 MB/s) — the gap grows with input size as
+fixed per-parse costs amortize. libsimdxml nodes/attributes counts are
+bit-identical to pugixml and expat at every size.
 
 Earlier in-process A/B harness (100+ alternating runs, pre-fusion code):
 parse 351/374 MB/s (1.26×/1.36× vs pugixml), full index 285/300 MB/s
@@ -56,24 +59,24 @@ measured in-binary: scalar 0.8 GB/s → AVX2 3.1–4.3 GB/s.
 
 ### Cross-language context
 
-Same `sample_1mb.xml` file, same machine, medians of the same orchestrator run
-(JVM rows from an earlier Docker-JVM run of the same harness):
+Same `sample_1mb.xml` file, same machine, medians of the same 13.09
+orchestrator run (JVM rows from an earlier Docker-JVM run of the same harness):
 
 | Parser             | Language | Parse time  | Throughput    |
 |--------------------|----------|-------------|---------------|
-| **libsimdxml**     | C++      | **3.25 ms** | **308 MB/s**  |
-| pugixml 1.16       | C++      | 3.39 ms     | 296 MB/s      |
-| expat (SAX)        | C++      | 10.6 ms     | 94 MB/s       |
+| **libsimdxml**     | C++      | **2.85 ms** | **351 MB/s**  |
+| pugixml 1.16       | C++      | 3.36 ms     | 298 MB/s      |
+| expat (SAX)        | C++      | 10.7 ms     | 94 MB/s       |
 | lxml               | Python   | 22.4 ms     | 45 MB/s       |
-| libxml2 (DOM)      | C++      | 25.4 ms     | 39 MB/s       |
-| lxml.html          | Python   | 33.2 ms     | 30 MB/s       |
-| cheerio            | Node.js  | 68.7 ms     | 15 MB/s       |
-| sax (Node)         | Node.js  | 89.8 ms     | 11 MB/s       |
-| xml.etree          | Python   | 109.5 ms    | 9 MB/s        |
+| libxml2 (DOM)      | C++      | 24.2 ms     | 41 MB/s       |
+| lxml.html          | Python   | 34.1 ms     | 29 MB/s       |
+| cheerio            | Node.js  | 68.9 ms     | 15 MB/s       |
+| sax (Node)         | Node.js  | 89.9 ms     | 11 MB/s       |
+| xml.etree          | Python   | 112.7 ms    | 9 MB/s        |
 | Xerces (DOM)       | Java     | 124 ms      | ~8.5 MB/s     |
 | jsoup              | Java     | 179 ms      | ~5.9 MB/s     |
 | dom4j              | Java     | 189 ms      | ~5.6 MB/s     |
-| html.parser        | Python   | 1012 ms     | ~1.0 MB/s     |
+| html.parser        | Python   | 1015 ms     | ~1.0 MB/s     |
 
 Numbers come from a 2013 laptop; the ratios, not the absolute values, are the
 point.
