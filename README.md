@@ -36,21 +36,27 @@ are reproducible:
 
 ### Parse speed (MB/s)
 
-Measured on an Intel Core i7-4850HQ (Haswell, 2013 laptop, 2.3 GHz), C++23.
-Sequential benchmark orchestrator: fresh process per run, cold runs discarded,
-one process at a time, thermal abort at 100 °C (no cooldown gating).
+Measured on an Intel Core i7-4850HQ (Haswell, 2013 laptop, 2.3 GHz base clock),
+C++23. Sequential benchmark orchestrator: fresh process per run, cold runs
+discarded, one process at a time, thermal abort at 100 °C (no cooldown gating),
+medians of 9 reps (2 cold discarded). Since 13.09 the machine runs at its
+deterministic base clock — turbo is locked out at firmware/SMC level
+(`scaling_max_freq` stays at 2.3 GHz even idle, `no_turbo=0` does not help) —
+so these runs are reproducible; compare ratios, not absolute values against
+earlier runs that had turbo active.
 
 | Workload                                          | sample_1mb.xml          | sample_5mb.xml         | sample_10mb.xml        |
 |---------------------------------------------------|-------------------------|------------------------|------------------------|
-| libsimdxml — parse (structural index)             | **351 MB/s** (2.85 ms)  | **376 MB/s** (13.3 ms) | **405 MB/s** (24.7 ms) |
-| pugixml 1.16, in-situ (reference)                 | 298 MB/s (3.36 ms)      | 322 MB/s (15.5 ms)     | 322 MB/s (31.1 ms)     |
+| libsimdxml — parse (structural index)             | **249.6 MB/s** (4.01 ms)| **265.4 MB/s** (18.8 ms)| **289.7 MB/s** (34.5 ms)|
+| pugixml 1.16, in-situ (reference)                 | 206.2 MB/s (4.86 ms)    | 225.6 MB/s (22.2 ms)   | 225.1 MB/s (44.4 ms)   |
 
-Speedup of libsimdxml over pugixml 1.16: **1.18× (1 MB) → 1.26× (10 MB)**,
-from the 13.09 rerun of the full cpp/python/node matrix. The earlier 12.09
-run (cooldown-gated policy) measured 1.16×/1.12×/1.26× on the same sizes and
-reached **1.40× at 30 MB** (414 MB/s) — the gap grows with input size as
-fixed per-parse costs amortize. libsimdxml nodes/attributes counts are
-bit-identical to pugixml and expat at every size.
+Speedup of libsimdxml over pugixml 1.16: **1.21× (1 MB) → 1.29× (10 MB)**, from
+the final 13.09 full-native matrix (`rerun_crosslang_20260913_123107`: 17
+parsers, 6 languages — C++/Python/Node/Java/Rust/Ruby — in one run, Java
+natively via javac, no Docker). The earlier turbo-era runs measured higher
+absolute values (up to 414 MB/s @ 30 MB, 1.40×) — the ratio is the point, the
+gap grows with input size as fixed per-parse costs amortize. libsimdxml
+nodes/attributes counts are bit-identical to pugixml and expat at every size.
 
 Earlier in-process A/B harness (100+ alternating runs, pre-fusion code):
 parse 351/374 MB/s (1.26×/1.36× vs pugixml), full index 285/300 MB/s
@@ -59,24 +65,36 @@ measured in-binary: scalar 0.8 GB/s → AVX2 3.1–4.3 GB/s.
 
 ### Cross-language context
 
-Same `sample_1mb.xml` file, same machine, medians of the same 13.09
-orchestrator run (JVM rows from an earlier Docker-JVM run of the same harness):
+Same `sample_1mb.xml` file, same base-clock run 123107 (13.09) — all rows
+measured in one native orchestrator run, Java included:
 
 | Parser             | Language | Parse time  | Throughput    |
 |--------------------|----------|-------------|---------------|
-| **libsimdxml**     | C++      | **2.85 ms** | **351 MB/s**  |
-| pugixml 1.16       | C++      | 3.36 ms     | 298 MB/s      |
-| expat (SAX)        | C++      | 10.7 ms     | 94 MB/s       |
-| lxml               | Python   | 22.4 ms     | 45 MB/s       |
-| libxml2 (DOM)      | C++      | 24.2 ms     | 41 MB/s       |
-| lxml.html          | Python   | 34.1 ms     | 29 MB/s       |
-| cheerio            | Node.js  | 68.9 ms     | 15 MB/s       |
-| sax (Node)         | Node.js  | 89.9 ms     | 11 MB/s       |
-| xml.etree          | Python   | 112.7 ms    | 9 MB/s        |
-| Xerces (DOM)       | Java     | 124 ms      | ~8.5 MB/s     |
-| jsoup              | Java     | 179 ms      | ~5.9 MB/s     |
-| dom4j              | Java     | 189 ms      | ~5.6 MB/s     |
-| html.parser        | Python   | 1015 ms     | ~1.0 MB/s     |
+| **libsimdxml**     | C++      | **4.01 ms** | **249.6 MB/s**|
+| pugixml 1.16       | C++      | 4.86 ms     | 206.2 MB/s    |
+| quick-xml 0.36     | Rust     | 5.13 ms     | 195.3 MB/s    |
+| expat (SAX)        | C++      | 15.40 ms    | 65.0 MB/s     |
+| roxmltree 0.20     | Rust     | 17.99 ms    | 55.6 MB/s     |
+| lxml               | Python   | 33.25 ms    | 30.1 MB/s     |
+| libxml2 (DOM)      | C++      | 34.98 ms    | 28.6 MB/s     |
+| nokogiri           | Ruby     | 44.24 ms    | 22.6 MB/s     |
+| lxml.html          | Python   | 48.73 ms    | 20.5 MB/s     |
+| cheerio            | Node.js  | 96.92 ms    | 10.3 MB/s     |
+| sax (Node)         | Node.js  | 134.47 ms   | 7.4 MB/s      |
+| Xerces (DOM)       | Java     | 157.10 ms   | 6.4 MB/s      |
+| xml.etree          | Python   | 161.48 ms   | 6.2 MB/s      |
+| jsoup              | Java     | 283.54 ms   | 3.5 MB/s      |
+| dom4j              | Java     | 302.58 ms   | 3.3 MB/s      |
+| html.parser        | Python   | 1520.94 ms  | 0.7 MB/s      |
+| rexml              | Ruby     | 1688.86 ms  | 0.6 MB/s      |
+
+Rust's quick-xml is the fastest non-C++ parser (~195 MB/s, flat across sizes;
+5–14% behind pugixml) — libsimdxml beats it by 1.28×/1.36×/1.51×
+(1 MB/5 MB/10 MB). Versions: Java natively on this host (javac, JDK 27);
+quick-xml 0.36.2, roxmltree 0.20.0; nokogiri 1.19.4, rexml 3.4.4. tinyxml2 and
+fast-xml-parser error out on the `<?bench-pi…?>` corpus (a pre-existing entity
+limit / PI-node limitation, not a bug) and are excluded. Full medians (all
+sizes, ms/mean/p95/memory) ship in `docs/analiza_perf_2026-09-12.html`.
 
 Numbers come from a 2013 laptop; the ratios, not the absolute values, are the
 point.
