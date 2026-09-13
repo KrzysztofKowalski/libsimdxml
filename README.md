@@ -45,14 +45,15 @@ orchestrator: fresh process per run, cold runs discarded, medians of 9 reps
 
 | Workload                                          | sample_1mb.xml          | sample_5mb.xml         | sample_10mb.xml        |
 |---------------------------------------------------|-------------------------|------------------------|------------------------|
-| libsimdxml — parse (structural index)             | **249.6 MB/s** (4.01 ms)| **265.4 MB/s** (18.8 ms)| **289.7 MB/s** (34.5 ms)|
-| pugixml 1.16, in-situ (reference)                 | 206.2 MB/s (4.86 ms)    | 225.6 MB/s (22.2 ms)   | 225.1 MB/s (44.4 ms)   |
+| libsimdxml — parse (structural index)             | **251.7 MB/s** (3.98 ms)| **261.9 MB/s** (19.1 ms)| **283.4 MB/s** (35.3 ms)|
+| pugixml 1.16, in-situ (reference)                 | 207.9 MB/s (4.81 ms)    | 225.2 MB/s (22.2 ms)   | 227.1 MB/s (44.0 ms)   |
 
-Speedup of libsimdxml over pugixml 1.16: **1.21× (1 MB) → 1.29× (10 MB)**, from
-the final 13.09 full-native matrix (`rerun_crosslang_20260913_123107`: 17
-parsers, 6 languages — C++/Python/Node/Java/Rust/Ruby — in one run, Java
-natively via javac). libsimdxml nodes/attributes counts are bit-identical to
-pugixml and expat at every size.
+Speedup of libsimdxml over pugixml 1.16: **1.21× (1 MB) / 1.16× (5 MB) →
+1.25× (10 MB)**, from the final 13.09 full-native matrix
+(`rerun_crosslang_20260913_160014`: 17 parsers, 6 languages —
+C++/Python/Node/Java/Rust/Ruby — in one run, Java natively via javac, run
+confirmed within noise by an independent rerun). libsimdxml nodes/attributes
+counts are bit-identical to pugixml and expat at every size.
 
 Earlier in-process A/B harness (100+ alternating runs, pre-fusion code):
 parse 351/374 MB/s (1.26×/1.36× vs pugixml), full index 285/300 MB/s
@@ -61,31 +62,31 @@ measured in-binary: scalar 0.8 GB/s → AVX2 3.1–4.3 GB/s.
 
 ### Cross-language context
 
-Same `sample_1mb.xml` file, same base-clock run 123107 (13.09) — all rows
+Same `sample_1mb.xml` file, same base-clock run 160014 (13.09) — all rows
 measured in one native orchestrator run, Java included:
 
 | Parser             | Language | Parse time  | Throughput    |
 |--------------------|----------|-------------|---------------|
-| **libsimdxml**     | C++      | **4.01 ms** | **249.6 MB/s**|
-| pugixml 1.16       | C++      | 4.86 ms     | 206.2 MB/s    |
-| quick-xml 0.36     | Rust     | 5.13 ms     | 195.3 MB/s    |
-| expat (SAX)        | C++      | 15.40 ms    | 65.0 MB/s     |
-| roxmltree 0.20     | Rust     | 17.99 ms    | 55.6 MB/s     |
-| lxml               | Python   | 33.25 ms    | 30.1 MB/s     |
+| **libsimdxml**     | C++      | **3.98 ms** | **251.7 MB/s**|
+| pugixml 1.16       | C++      | 4.81 ms     | 207.9 MB/s    |
+| quick-xml 0.36     | Rust     | 5.12 ms     | 195.4 MB/s    |
+| expat (SAX)        | C++      | 15.38 ms    | 65.1 MB/s     |
+| roxmltree 0.20     | Rust     | 18.04 ms    | 55.5 MB/s     |
+| lxml               | Python   | 33.03 ms    | 30.3 MB/s     |
 | libxml2 (DOM)      | C++      | 34.98 ms    | 28.6 MB/s     |
-| nokogiri           | Ruby     | 44.24 ms    | 22.6 MB/s     |
-| lxml.html          | Python   | 48.73 ms    | 20.5 MB/s     |
-| cheerio            | Node.js  | 96.92 ms    | 10.3 MB/s     |
-| sax (Node)         | Node.js  | 134.47 ms   | 7.4 MB/s      |
-| Xerces (DOM)       | Java     | 157.10 ms   | 6.4 MB/s      |
-| xml.etree          | Python   | 161.48 ms   | 6.2 MB/s      |
-| jsoup              | Java     | 283.54 ms   | 3.5 MB/s      |
-| dom4j              | Java     | 302.58 ms   | 3.3 MB/s      |
-| html.parser        | Python   | 1520.94 ms  | 0.7 MB/s      |
-| rexml              | Ruby     | 1688.86 ms  | 0.6 MB/s      |
+| nokogiri           | Ruby     | 44.44 ms    | 22.5 MB/s     |
+| lxml.html          | Python   | 49.44 ms    | 20.2 MB/s     |
+| cheerio            | Node.js  | 97.50 ms    | 10.3 MB/s     |
+| sax (Node)         | Node.js  | 129.48 ms   | 7.7 MB/s      |
+| Xerces (DOM)       | Java     | 150.11 ms   | 6.7 MB/s      |
+| xml.etree          | Python   | 159.63 ms   | 6.3 MB/s      |
+| jsoup              | Java     | 268.75 ms   | 3.7 MB/s      |
+| dom4j              | Java     | 314.59 ms   | 3.2 MB/s      |
+| html.parser        | Python   | 1531.77 ms  | 0.7 MB/s      |
+| rexml              | Ruby     | 1696.28 ms  | 0.6 MB/s      |
 
 Rust's quick-xml is the fastest non-C++ parser (~195 MB/s, flat across sizes;
-5–14% behind pugixml) — libsimdxml beats it by 1.28×/1.36×/1.51×
+6–15% behind pugixml) — libsimdxml beats it by 1.29×/1.35×/1.46×
 (1 MB/5 MB/10 MB). Versions: Java natively on this host (javac, JDK 27);
 quick-xml 0.36.2, roxmltree 0.20.0; nokogiri 1.19.4, rexml 3.4.4. tinyxml2 and
 fast-xml-parser error out on the `<?bench-pi…?>` corpus (a pre-existing entity
