@@ -1,5 +1,7 @@
 # libsimdxml
 
+![libsimdxml](logo.webp)
+
 SIMD-accelerated XML parser with full XPath 1.0 for **C++23** — single-pass
 indexing, zero-copy by design, runtime SIMD dispatch.
 
